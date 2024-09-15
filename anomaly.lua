@@ -290,6 +290,7 @@ if game.PlaceId == supportedGames["Weaponry"] then
     hitboxExpanderHeadEv, rainbowGunChildAddedEv, rainbowGunCharacterAddedEv, autoFireModeEv
     
     local function getWeaponProperties() 
+        if not inventoryManager then repeat taskWait() until inventoryManager end 
         for i, v in next, getUpvalues(inventoryManager) do 
             if type(v) ~= "table" then continue end 
             for i, v in next, v do 

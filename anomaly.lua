@@ -1506,7 +1506,6 @@ elseif game.PlaceId == supportedGames["MVSD"]["Default Server"] or game.PlaceId 
                 killAllEv = renderStepped:Connect(function()
                     if localPlayer.Character then
                         local character = localPlayer.Character
-                        print(getNearestPlayerHead())
                         if character:FindFirstChild("HumanoidRootPart") and getNearestPlayerHead() then
                             local root = character.HumanoidRootPart
                             local part = getNearestPlayerHead():FindFirstChild("Part")
@@ -1870,6 +1869,7 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
     local fishClockRemote = remotesFolder.Misc.FishClock
     local basic = require(ReplicatedStorage.RS.Modules.Basic)
     local updateHunger = remotesFolder.UI.UpdateHunger
+    repeat task.wait() until connections(updateHunger.OnClientEvent)[1].Function
     local hungerFunc = connections(updateHunger.OnClientEvent)[1].Function
     local currentHunger = getupvalue(hungerFunc, 1)
 
@@ -2747,16 +2747,6 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
         Callback = function(v)
             if v then 
                 for i, islands in next, mapFolder:GetChildren() do 
-                    chestFolderRemovedEv = islands.ChildAdded:Connect(function(child) 
-                        if child.Name == "Chests" then
-                            for i, chest in next, child:GetChildren() do 
-                                if table.find(child:GetChildren(), chest) then 
-                                    removePlayerDrawingCache("Chest Text", chest)
-                                end 
-                            end 
-                        end
-                    end)
-
                     if islands:FindFirstChild("Chests") then 
                         local chestFolder = islands.Chests 
 
@@ -2772,12 +2762,18 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
                             end)
                         end 
 
-                        chestAddedEv = chestFolder.ChildAdded:Connect(function(child) 
-                            if child.Name:find("Chest") then 
-                                addPlayerToDrawingCache("Chest Text", child) 
-
-                                chestChildAddedEv = child.ChildAdded:Connect(function(child)
-                                    if child.Name == "Open" then removePlayerDrawingCache("Chest Text", chest) end 
+                        chestAddedEv = chestFolder.ChildAdded:Connect(function(chestChild) 
+                            if chestChild.Name:find("Chest") or chestChild.Name:find("Storage") then 
+                                addPlayerToDrawingCache("Chest Text", chestChild) 
+                                local originalParent = chestChild.Parent 
+                                chestParentChangeEv = chestChild.AncestryChanged:Connect(function(child, parent)
+                                    if originalParent ~= parent then
+                                        removePlayerDrawingCache("Chest Text", chestChild)
+                                    end
+                                end)
+                                
+                                chestChildAddedEv = chestChild.ChildAdded:Connect(function(child)
+                                    if child.Name == "Open" then removePlayerDrawingCache("Chest Text", chestChild) end 
                                 end)
                             end 
                         end)
@@ -2797,7 +2793,13 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
                                 if not chest:FindFirstChild("Open") then 
                                     addPlayerToDrawingCache("Chest Text", chest)
                                 end 
-
+                                local originalParent = chest.Parent.Parent.Parent
+                                chestParentChangeEv = chest.AncestryChanged:Connect(function(child, parent) 
+                                    print(parent.Parent.Parent)
+                                    if originalParent ~= parent.Parent.Parent then
+                                        removePlayerDrawingCache("Chest Text", chest)
+                                    end
+                                end)
                                 chestChildAddedEv = chest.ChildAdded:Connect(function(child) 
                                     if child.Name == "Open" then
                                         removePlayerDrawingCache("Chest Text", chest) 
@@ -2806,11 +2808,19 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
                             end 
 
                             chestAddedEv = chestFolder.ChildAdded:Connect(function(chestChild) 
-                                if child.Name:find("Chest") or child.Name:find("Storage") then 
+                                if chestChild.Name:find("Chest") or chestChild.Name:find("Storage") then 
                                     addPlayerToDrawingCache("Chest Text", chestChild) 
-    
-                                    chestChildAddedEv = child.ChildAdded:Connect(function(child)
+                                    local originalParent = chestChild.Parent 
+                                    chestParentChangeEv = chestChild.AncestryChanged:Connect(function(child, parent)
+                                        print(parent.Parent.Parent)
+                                        if originalParent ~= parent.Parent.Parent then
+                                            removePlayerDrawingCache("Chest Text", chest)
+                                        end
+                                    end)
+
+                                    chestChildAddedEv = chestChild.ChildAdded:Connect(function(child)
                                         if child.Name == "Open" then removePlayerDrawingCache("Chest Text", chestChild) end 
+
                                     end)
                                 end 
                             end)

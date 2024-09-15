@@ -1823,7 +1823,8 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
     local basic = require(ReplicatedStorage.RS.Modules.Basic)
     local updateHunger = remotesFolder.UI.UpdateHunger
     local hungerFunc = connections(updateHunger.OnClientEvent)[1].Function
-
+    local currentHunger = getupvalue(hungerFunc, 1)
+    
     local eyesDecalTexture, mouthDecalTexture, irisDecalTexture, 
     eyesColor, irisColor, mouthColor, headlessHeadEv, boatSpeed,
     killAuraPlayersEv, forceLoadEnemiesEv, antiWhirlpoolEv, forceLoadBossesEv, 

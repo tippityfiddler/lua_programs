@@ -102,7 +102,7 @@ local function universalHitboxExpander()
             end 
         end 
 
-        if v.Team == localPlayer.Team and #Teams:GetChildren() > 0 then 
+        if v.Team == localPlayer.Team and #Teams:GetChildren() > 0 and v.Character then 
             local character = v.Character 
 
             if character:FindFirstChild("HumanoidRootPart") then 
@@ -230,51 +230,51 @@ local function getNearestPlayerHead()
                 end
             end 
         end
-    end
-
-    -- MVSD Get Nearest Player Head
-    if v.Character and ReplicatedStorage:FindFirstChild("HiddenCharacters") then 
-        local hiddenCharacters = ReplicatedStorage.HiddenCharacters
-        local character = v.Character
         
-        if localPlayer.Team ~= v.Team and #Teams.GetChildren(Teams) > 0 and not hiddenCharacters.FindFirstChild(hiddenCharacters, v.Name) then 
-            if character.FindFirstChild(character, "Head") and character.FindFirstChild(character, "Humanoid") and  not character.FindFirstChild(character, "ForceField") and not character.FindFirstChild(character, "SpawnShield") and not character.FindFirstChild(character, "BaseShieldForceField")  then 
-                local head = character.Head
-                local humanoid = character.Humanoid
+        -- MVSD Get Nearest Player Head
+        if v.Character and ReplicatedStorage:FindFirstChild("HiddenCharacters") then 
+            local hiddenCharacters = ReplicatedStorage.HiddenCharacters
+            local character = v.Character
+            
+            if localPlayer.Team ~= v.Team and #Teams.GetChildren(Teams) > 0 and not hiddenCharacters.FindFirstChild(hiddenCharacters, v.Name) then 
+                if character.FindFirstChild(character, "Head") and character.FindFirstChild(character, "Humanoid") and  not character.FindFirstChild(character, "ForceField") and not character.FindFirstChild(character, "SpawnShield") and not character.FindFirstChild(character, "BaseShieldForceField")  then 
+                    local head = character.Head
+                    local humanoid = character.Humanoid
 
-                if humanoid.Health > 0 then 
-                    local headPos, onScreen = wtvp(camera, head.Position)
-    
-                    if onScreen then 
-                        local distanceFromHead = (Vector2.new(mouse.X, mouse.Y) - Vector2.new(headPos.X, headPos.Y)).Magnitude
-    
-                        if distanceFromHead < distance then 
-                            distance = distanceFromHead
-                            target = head
+                    if humanoid.Health > 0 then 
+                        local headPos, onScreen = wtvp(camera, head.Position)
+        
+                        if onScreen then 
+                            local distanceFromHead = (Vector2.new(mouse.X, mouse.Y) - Vector2.new(headPos.X, headPos.Y)).Magnitude
+        
+                            if distanceFromHead < distance then 
+                                distance = distanceFromHead
+                                target = head
+                            end
                         end
                     end
                 end
-            end
 
-        elseif #Teams.GetChildren(Teams) == 0 and not hiddenCharacters.FindFirstChild(hiddenCharacters, v.Name) then 
-            if character.FindFirstChild(character, "Head") and character.FindFirstChild(character, "Humanoid") and  not character.FindFirstChild(character, "ForceField") and not character.FindFirstChild(character, "SpawnShield") and not character.FindFirstChild(character, "BaseShieldForceField")  then 
-                local head = character.Head
-                local humanoid = character.Humanoid
+            elseif #Teams.GetChildren(Teams) == 0 and not hiddenCharacters.FindFirstChild(hiddenCharacters, v.Name) then 
+                if character.FindFirstChild(character, "Head") and character.FindFirstChild(character, "Humanoid") and not character.FindFirstChild(character, "ForceField") and not character.FindFirstChild(character, "SpawnShield") and not character.FindFirstChild(character, "BaseShieldForceField")  then 
+                    local head = character.Head
+                    local humanoid = character.Humanoid
 
-                if humanoid.Health > 0 then 
-                    local headPos, onScreen = wtvp(camera, head.Position)
-    
-                    if onScreen then 
-                        local distanceFromHead = (Vector2.new(mouse.X, mouse.Y) - Vector2.new(headPos.X, headPos.Y)).Magnitude
-    
-                        if distanceFromHead < distance then 
-                            distance = distanceFromHead
-                            target = head
+                    if humanoid.Health > 0 then 
+                        local headPos, onScreen = wtvp(camera, head.Position)
+        
+                        if onScreen then 
+                            local distanceFromHead = (Vector2.new(mouse.X, mouse.Y) - Vector2.new(headPos.X, headPos.Y)).Magnitude
+        
+                            if distanceFromHead < distance then 
+                                distance = distanceFromHead
+                                target = head
+                            end
                         end
                     end
                 end
-            end
-        end 
+            end 
+        end
     end
 
     return target

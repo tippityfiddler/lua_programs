@@ -25,7 +25,7 @@ local mouse = localPlayer.GetMouse(localPlayer)
 local silentAim, wallbang, playerSpeed, 
 boxPlayerAddedEv, boxPlayerRemovingEv, updateBoxEsp, updateTextEsp, 
 textPlayerAddedEv, textPlayerRemovingEv, healthBarPlayerAddedEv, healthBarPlayerRemovingEv,
-updateHealthBarEsp, showCursor, noFogEv, fullBrightEv, hitboxExpanderTorsoEv
+updateHealthBarEsp, showCursor, noFogEv, fullBrightEv, hitboxExpanderTorsoEv, mvsdKillAll
 
 local textEspCache = {}
 local boxEspCache = {}
@@ -188,93 +188,95 @@ local function getNearestPlayerHead()
     local distance = math.huge
 
     for i, v in next, Players.GetPlayers(Players) do 
-        if v.Character and not ReplicatedStorage:FindFirstChild("HiddenCharacters") then 
-            local character = v.Character
+        if v ~= localPlayer then 
+            if v.Character then
+                local character = v.Character
 
-            if localPlayer.Team ~= v.Team and #Teams.GetChildren(Teams) > 0 then 
-                if character.FindFirstChild(character, "Head") and character.FindFirstChild(character, "Humanoid") and  not character.FindFirstChild(character, "ForceField") and not character.FindFirstChild(character, "SpawnShield") and not character.FindFirstChild(character, "BaseShieldForceField")  then 
-                    local head = character.Head
-                    local humanoid = character.Humanoid
+                if not ReplicatedStorage.FindFirstChild(ReplicatedStorage, "HiddenCharacters") then  
+                    if localPlayer.Team ~= v.Team and #Teams.GetChildren(Teams) > 0 then 
+                        if character.FindFirstChild(character, "Head") and character.FindFirstChild(character, "Humanoid") and  not character.FindFirstChild(character, "ForceField") and not character.FindFirstChild(character, "SpawnShield") and not character.FindFirstChild(character, "BaseShieldForceField")  then 
+                            local head = character.Head
+                            local humanoid = character.Humanoid
 
-                    if humanoid.Health > 0 then 
-                        local headPos, onScreen = wtvp(camera, head.Position)
-        
-                        if onScreen then 
-                            local distanceFromHead = (Vector2.new(mouse.X, mouse.Y) - Vector2.new(headPos.X, headPos.Y)).Magnitude
-        
-                            if distanceFromHead < distance then 
-                                distance = distanceFromHead
-                                target = head
+                            if humanoid.Health > 0 then 
+                                local headPos, onScreen = wtvp(camera, head.Position)
+                
+                                if onScreen then 
+                                    local distanceFromHead = (Vector2.new(mouse.X, mouse.Y) - Vector2.new(headPos.X, headPos.Y)).Magnitude
+                
+                                    if distanceFromHead < distance then 
+                                        distance = distanceFromHead
+                                        target = head
+                                    end
+                                end
+                            end
+                        end
+                        
+                    elseif #Teams.GetChildren(Teams) == 0 then 
+                        if character.FindFirstChild(character, "Head") and character.FindFirstChild(character, "Humanoid") and  not character.FindFirstChild(character, "ForceField") and not character.FindFirstChild(character, "SpawnShield") and not character.FindFirstChild(character, "BaseShieldForceField")  then 
+                            local head = character.Head
+                            local humanoid = character.Humanoid
+
+                            if humanoid.Health > 0 then 
+                                local headPos, onScreen = wtvp(camera, head.Position)
+                
+                                if onScreen then 
+                                    local distanceFromHead = (Vector2.new(mouse.X, mouse.Y) - Vector2.new(headPos.X, headPos.Y)).Magnitude
+                
+                                    if distanceFromHead < distance then 
+                                        distance = distanceFromHead
+                                        target = head
+                                    end
+                                end
                             end
                         end
                     end
-                end
 
-            elseif #Teams.GetChildren(Teams) == 0 then 
-                if character.FindFirstChild(character, "Head") and character.FindFirstChild(character, "Humanoid") and  not character.FindFirstChild(character, "ForceField") and not character.FindFirstChild(character, "SpawnShield") and not character.FindFirstChild(character, "BaseShieldForceField")  then 
-                    local head = character.Head
-                    local humanoid = character.Humanoid
+                -- MVSD Game Check:
+                elseif ReplicatedStorage.FindFirstChild(ReplicatedStorage, "HiddenCharacters") then  
+                    local hiddenCharacters = ReplicatedStorage.HiddenCharacters
 
-                    if humanoid.Health > 0 then 
-                        local headPos, onScreen = wtvp(camera, head.Position)
-        
-                        if onScreen then 
-                            local distanceFromHead = (Vector2.new(mouse.X, mouse.Y) - Vector2.new(headPos.X, headPos.Y)).Magnitude
-        
-                            if distanceFromHead < distance then 
-                                distance = distanceFromHead
-                                target = head
+                    if v ~= localPlayer and localPlayer.Team ~= v.Team and not hiddenCharacters.FindFirstChild(hiddenCharacters, v.Name) then 
+                        if character.FindFirstChild(character, "Head") and character.FindFirstChild(character, "Humanoid") and not character.FindFirstChild(character, "ForceField") and not character.FindFirstChild(character, "SpawnShield") and not character.FindFirstChild(character, "BaseShieldForceField") then 
+                            local head = character.Head
+                            local humanoid = character.Humanoid
+    
+                            if humanoid.Health > 0 then 
+                                local headPos, onScreen = wtvp(camera, head.Position)
+                                
+                                if not mvsdKillAll and silentAim then 
+                                    if onScreen then 
+                                        local distanceFromHead = (Vector2.new(mouse.X, mouse.Y) - Vector2.new(headPos.X, headPos.Y)).Magnitude
+                    
+                                        if distanceFromHead < distance then 
+                                            distance = distanceFromHead
+                                            target = head
+                                        end
+                                    end
+
+                                elseif mvsdKillAll and not silentAim then 
+                                    local distanceFromHead = localPlayer.DistanceFromCharacter(localPlayer, head.Position)
+                
+                                    if distanceFromHead < distance then 
+                                        distance = distanceFromHead
+                                        target = head
+                                    end
+                                    
+                                elseif mvsdKillAll and silentAim then 
+                                    local distanceFromHead = localPlayer.DistanceFromCharacter(localPlayer, head.Position)
+                
+                                    if distanceFromHead < distance then 
+                                        distance = distanceFromHead
+                                        target = head
+                                    end
+                                end 
                             end
                         end
                     end
-                end
-            end 
-        end
+                end 
+            end
         
-        -- MVSD Get Nearest Player Head
-        if v.Character and ReplicatedStorage:FindFirstChild("HiddenCharacters") then 
-            local hiddenCharacters = ReplicatedStorage.HiddenCharacters
-            local character = v.Character
-            
-            if localPlayer.Team ~= v.Team and #Teams.GetChildren(Teams) > 0 and not hiddenCharacters.FindFirstChild(hiddenCharacters, v.Name) then 
-                if character.FindFirstChild(character, "Head") and character.FindFirstChild(character, "Humanoid") and  not character.FindFirstChild(character, "ForceField") and not character.FindFirstChild(character, "SpawnShield") and not character.FindFirstChild(character, "BaseShieldForceField")  then 
-                    local head = character.Head
-                    local humanoid = character.Humanoid
-
-                    if humanoid.Health > 0 then 
-                        local headPos, onScreen = wtvp(camera, head.Position)
-        
-                        if onScreen then 
-                            local distanceFromHead = (Vector2.new(mouse.X, mouse.Y) - Vector2.new(headPos.X, headPos.Y)).Magnitude
-        
-                            if distanceFromHead < distance then 
-                                distance = distanceFromHead
-                                target = head
-                            end
-                        end
-                    end
-                end
-
-            elseif #Teams.GetChildren(Teams) == 0 and not hiddenCharacters.FindFirstChild(hiddenCharacters, v.Name) then 
-                if character.FindFirstChild(character, "Head") and character.FindFirstChild(character, "Humanoid") and not character.FindFirstChild(character, "ForceField") and not character.FindFirstChild(character, "SpawnShield") and not character.FindFirstChild(character, "BaseShieldForceField")  then 
-                    local head = character.Head
-                    local humanoid = character.Humanoid
-
-                    if humanoid.Health > 0 then 
-                        local headPos, onScreen = wtvp(camera, head.Position)
-        
-                        if onScreen then 
-                            local distanceFromHead = (Vector2.new(mouse.X, mouse.Y) - Vector2.new(headPos.X, headPos.Y)).Magnitude
-        
-                            if distanceFromHead < distance then 
-                                distance = distanceFromHead
-                                target = head
-                            end
-                        end
-                    end
-                end
-            end 
-        end
+        end 
     end
 
     return target
@@ -1429,15 +1431,16 @@ elseif game.PlaceId == supportedGames["MVSD"]["Default Server"] or game.PlaceId 
     local SilentAim = GeneralSection:AddToggle({ Name = "Silent Aim", Flag = "Silent Aim [MVSD]", Callback = function(v) silentAim = v end })
     local KillAll = GeneralSection:AddToggle({ Name = "Kill All", Flag = "Kill All [MVSD]", 
         Callback = function(v) 
+            mvsdKillAll = v 
            if v then
                 killAllEv = renderStepped:Connect(function()
                     if localPlayer.Character then
                         local character = localPlayer.Character
-
+                        print(getNearestPlayerHead())
                         if character:FindFirstChild("HumanoidRootPart") and getNearestPlayerHead() then
                             local root = character.HumanoidRootPart
                             local part = getNearestPlayerHead():FindFirstChild("Part")
-                            if enemyPart then
+                            if part then
                                 local shootRemote = ReplicatedStorage.Remotes.Shoot
                                 local args = { [1] = root.Position, [2] = Vector3.new(-210.20181274414062, 172.1002197265625, -92.3746337890625), [3] = part, [4] = part.Position }
                                 shootRemote:FireServer(unpack(args)) 
@@ -1760,7 +1763,8 @@ elseif game.PlaceId == supportedGames["MVSD"]["Default Server"] or game.PlaceId 
     local oldNamecall; oldNamecall = hookmetamethod(game, "__namecall", newcclosure(function(...)
         local args = { ... }
         if silentAim then 
-            if method == "Raycast" and getNearestPlayerHead() and tostring(callingScript()) == "GunController" or tostring(callingScript()) == "KnifeController" then 
+
+            if callMethod() == "Raycast" and getNearestPlayerHead() and tostring(callingScript()) == "GunController" or tostring(callingScript()) == "KnifeController" then 
                 local closestPlayerHead = getNearestPlayerHead() 
                 args[2] = camera.CFrame.Position
                 args[3] = (closestPlayerHead.Position - args[2]).Unit * 10000

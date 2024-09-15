@@ -1,2 +1,2 @@
 # robloxScripts
-I place roblox scripts that I make here :D
+roblox scripts made by me here

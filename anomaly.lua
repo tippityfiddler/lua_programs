@@ -884,4 +884,4 @@ if game.PlaceId == supportedGames["Weaponry"] then
     end)
 end 
 
-queueTeleport([[loadstring(game:HttpGet("https://raw.githubusercontent.com/Asxhes/robloxScripts/main/anomaly.lua"))()]])
+queueTeleport([[loadstring(game:HttpGet("https://raw.githubusercontent.com/Anomaly-cool/robloxScripts/main/anomaly.lua"))()]])

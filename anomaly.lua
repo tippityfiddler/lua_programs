@@ -261,7 +261,7 @@ local function getNearestPlayerHead()
                                         distance = distanceFromHead
                                         target = head
                                     end
-                                    
+
                                 elseif mvsdKillAll and silentAim then 
                                     local distanceFromHead = localPlayer.DistanceFromCharacter(localPlayer, head.Position)
                 
@@ -1486,7 +1486,7 @@ elseif game.PlaceId == supportedGames["MVSD"]["Default Server"] or game.PlaceId 
                             
                             if tool:GetAttribute("Cooldown") and tool:GetAttribute("Cooldown") ~= 0 then 
                                 tool:SetAttribute("Cooldown", 0)
-                                toolName = tool.Name
+                                local toolName = tool.Name
                                 tool.Parent = backpack
                                 backpack[toolName].Parent = character
                             end         
@@ -1518,9 +1518,9 @@ elseif game.PlaceId == supportedGames["MVSD"]["Default Server"] or game.PlaceId 
                             
                             if tool:GetAttribute("ThrowSpeed") and tool:GetAttribute("ThrowSpeed") ~= 1000000000000000 then 
                                 tool:SetAttribute("ThrowSpeed", 1000000000000000)
-                                toolName2 = tool.Name
+                                local toolName = tool.Name
                                 tool.Parent = backpack
-                                backpack[toolName2].Parent = character
+                                backpack[toolName].Parent = character
                             end         
                         end 
                     end

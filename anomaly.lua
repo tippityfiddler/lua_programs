@@ -12,6 +12,9 @@ local HttpService = game:GetService("HttpService")
 local VirtualUser = game:GetService("VirtualUser")
 local StarterGui = game:GetService("StarterGui")
 
+local Lighting = game:GetService("Lighting")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+
 -- Essential Variables:
 local localPlayer = Players.LocalPlayer 
 local camera = workspace.CurrentCamera 
@@ -21,15 +24,16 @@ local mouse = localPlayer.GetMouse(localPlayer)
 local silentAim, wallbang, playerSpeed, 
 boxPlayerAddedEv, boxPlayerRemovingEv, updateBoxEsp, updateTextEsp, 
 textPlayerAddedEv, textPlayerRemovingEv, healthBarPlayerAddedEv, healthBarPlayerRemovingEv,
-updateHealthBarEsp, showCursor
+updateHealthBarEsp, showCursor, noFogEv, fullBrightEv, hitboxExpanderTorsoEv
 
 local textEspCache = {}
 local boxEspCache = {}
 local healthBarEspCache = {}
 local supportedGames = {
     ["Weaponry"] = 3297964905,
-
+    ["War Tycoon"] = 4639625707,
 }
+
 local toxicMessages = {
     "Haha you're a loser, ", "Quit the game, ", "Keep crying, ", "You're so dog, ",
     "Never play this game again, ", "Nobody wants you here, ", "Mald, ", "Cope, ",
@@ -137,11 +141,11 @@ local function getNearestPlayerHead()
             local character = v.Character
 
             if localPlayer.Team ~= v.Team and #Teams.GetChildren(Teams) > 0 then 
-                if character.FindFirstChild(character, "Head") and character.FindFirstChild(character, "Humanoid") then 
+                if character.FindFirstChild(character, "Head") and character.FindFirstChild(character, "Humanoid") and  not character.FindFirstChild(character, "ForceField") and not character.FindFirstChild(character, "SpawnShield") and not character.FindFirstChild(character, "BaseShieldForceField")  then 
                     local head = character.Head
                     local humanoid = character.Humanoid
 
-                    if not character.FindFirstChild(character, "ForceField") and humanoid.Health > 0 then 
+                    if humanoid.Health > 0 then 
                         local headPos, onScreen = wtvp(camera, head.Position)
         
                         if onScreen then 
@@ -156,11 +160,11 @@ local function getNearestPlayerHead()
                 end
 
             elseif #Teams.GetChildren(Teams) == 0 then 
-                if character.FindFirstChild(character, "Head") and character.FindFirstChild(character, "Humanoid") then 
+                if character.FindFirstChild(character, "Head") and character.FindFirstChild(character, "Humanoid") and  not character.FindFirstChild(character, "ForceField") and not character.FindFirstChild(character, "SpawnShield") and not character.FindFirstChild(character, "BaseShieldForceField")  then 
                     local head = character.Head
                     local humanoid = character.Humanoid
 
-                    if not character.FindFirstChild(character, "ForceField") and humanoid.Health > 0 then 
+                    if humanoid.Health > 0 then 
                         local headPos, onScreen = wtvp(camera, head.Position)
         
                         if onScreen then 
@@ -271,6 +275,47 @@ local function removePlayerDrawingCache(name, player)
     end 
 end 
 
+-- UI Essential Universal Functions/Sections/Tabs/Button:
+local Library = loadstring(game:GetObjects("rbxassetid://7657867786")[1].Source)()
+local Anomaly = Library:CreateWindow({ Name = "Anomaly", Themeable = { Info = "Discord Server: VzYTJ7Y" } })
+local GeneralTab = Anomaly:CreateTab({ Name = "General" })
+local LightingSection = GeneralTab:CreateSection({ Name = "Lighting" })
+local NoShadows = LightingSection:AddToggle({ Name = "No Shadows", Flag = "No Shadows", Callback = function(v) Lighting.GlobalShadows = not Lighting.GlobalShadows end })
+local NoFog = LightingSection:AddToggle({ Name = "No Fog", Flag = "No Fog",
+    Callback = function(v)
+        if v then 
+            if Lighting:FindFirstChild("Atmosphere") then 
+                Lighting.Atmosphere.Density = 0    
+                noFogEv = Lighting.Atmosphere:GetPropertyChangedSignal("Density"):Connect(function()
+                    Lighting.Atmosphere.Density = 0
+                end)  
+            end
+        else
+            if noFogEv then noFogEv:Disconnect(); noFogEv = nil end 
+        end
+    end
+})
+local FullBright = LightingSection:AddToggle({ Name = "Full Bright", Flag = "Full Bright",
+    Callback = function(v)
+        if v then 
+            Lighting.Ambient = Color3.fromRGB(255, 255, 255)
+
+            fullBrightEv = Lighting:GetPropertyChangedSignal("Ambient"):Connect(function()
+                Lighting.Ambient = Color3.fromRGB(255, 255, 255)
+            end)
+        else 
+            if fullBrightEv then fullBrightEv:Disconnect(); fullBrightEv = nil end 
+        end
+    end
+})
+local PlayerSection = GeneralTab:CreateSection({ Name = "Local Player", Side = "Right" })
+local GeneralSection = GeneralTab:CreateSection({ Name = "General" })
+local EspSection = GeneralTab:CreateSection({ Name = "Extra Sensory Perception" })
+
+local RejoinServer = GeneralSection:AddButton({ Name = "Rejoin Server", Callback = function() rejoinServer() end })
+local ServerHop = GeneralSection:AddButton({ Name = "Server Hop", Callback = function() serverHop() end })
+local InfiniteYield = GeneralSection:AddButton({ Name = "Infinite Yield", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))() end })
+
 if game.PlaceId == supportedGames["Weaponry"] then 
     -- Game Essentials:
     local weaponryFramework = senv(localPlayer.PlayerScripts.WeaponryFramework)
@@ -283,11 +328,10 @@ if game.PlaceId == supportedGames["Weaponry"] then
     local handleHit = clientHitHandler.HandleHit
 
     local hitboxFolder = workspace.Hitboxes
-
     -- Weaponry Features Variables Initialization: 
     local rainbowGun, walkspeedEv, infAmmoEv, noSpreadEv, 
-    noRecoilEv, primary, secondary, hitboxExpanderTorsoEv,
-    hitboxExpanderHeadEv, rainbowGunChildAddedEv, rainbowGunCharacterAddedEv, autoFireModeEv
+    noRecoilEv, primary, secondary, hitboxExpanderHeadEv, rainbowGunChildAddedEv, 
+    rainbowGunCharacterAddedEv, autoFireModeEv, autoFireMode
     
     local function getWeaponProperties() 
         if not inventoryManager then repeat taskWait() until inventoryManager end 
@@ -321,16 +365,7 @@ if game.PlaceId == supportedGames["Weaponry"] then
             end
         end
     end
-    -- UI Essentials:
-    local Library = loadstring(game:GetObjects("rbxassetid://7657867786")[1].Source)()
-    local Anomaly = Library:CreateWindow({ Name = "Anomaly", Themeable = { Info = "Discord Server: VzYTJ7Y" } })
-    local GeneralTab = Anomaly:CreateTab({ Name = "General" })
-
     local GunModsSection = GeneralTab:CreateSection({ Name = "Gun Modifications", Side = "Right" })
-    local PlayerSection = GeneralTab:CreateSection({ Name = "Local Player", Side = "Right" })
-    local GeneralSection = GeneralTab:CreateSection({ Name = "General" })
-    local EspSection = GeneralTab:CreateSection({ Name = "Extra Sensory Perception" })
-
     local SilentAim = GeneralSection:AddToggle({ Name = "Silent Aim", Flag = "Silent Aim", Callback = function(v) silentAim = v end })
     local Wallbang = GeneralSection:AddToggle({ Name = "Wallbang [SNIPERS ONLY]", Flag = "Wallbang [SNIPERS ONLY]", Callback = function(v) wallbang = v end })
     local RainbowGun = GeneralSection:AddToggle({ Name = "Rainbow Gun", Flag = "Rainbow Gun", 
@@ -369,6 +404,7 @@ if game.PlaceId == supportedGames["Weaponry"] then
     })
     local RejoinServer = GeneralSection:AddButton({ Name = "Rejoin Server", Callback = function() rejoinServer() end })
     local ServerHop = GeneralSection:AddButton({ Name = "Server Hop", Callback = function() serverHop() end })
+    local InfiniteYield = GeneralSection:AddButton({ Name = "Infinite Yield", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))() end })
     local AlwaysShowCursor = GeneralSection:AddToggle({ Name = "Always Show Cursor", Flag = "Always Show Cursor", 
         Callback = function(v)
             if v then 
@@ -481,15 +517,18 @@ if game.PlaceId == supportedGames["Weaponry"] then
     })
     local AutomatciFireMode = GunModsSection:AddButton({ Name = "Automatic Fire Mode",
         Callback = function()
-            autoFireModeEv = renderStepped:Connect(function()
-                local primary, secondary = getWeaponProperties()
-                if primary then 
-                    primary.WeaponStats.FireMode = {Name = "Auto", Round = 1}
-                end
-                if secondary then 
-                    secondary.WeaponStats.FireMode = {Name = "Auto", Round = 1}
-                end
-            end)
+            if not autoFireMode then 
+                autoFireMode = true 
+                autoFireModeEv = renderStepped:Connect(function()
+                    local primary, secondary = getWeaponProperties()
+                    if primary then 
+                        primary.WeaponStats.FireMode = {Name = "Auto", Round = 1}
+                    end
+                    if secondary then 
+                        secondary.WeaponStats.FireMode = {Name = "Auto", Round = 1}
+                    end
+                end)
+            end 
         end
     })
     local InfAmmo = GunModsSection:AddToggle({ Name = "Inf Ammo",  Flag = "Inf Ammo", 
@@ -515,9 +554,7 @@ if game.PlaceId == supportedGames["Weaponry"] then
             end 
         end 
     })
-    local NoSpread = GunModsSection:AddToggle({
-        Name = "No Spread", 
-        Flag = "No Spread", 
+    local NoSpread = GunModsSection:AddToggle({ Name = "No Spread", Flag = "No Spread", 
         Callback = function(v) 
             if v then 
                 noSpreadEv = renderStepped:Connect(function()
@@ -554,9 +591,7 @@ if game.PlaceId == supportedGames["Weaponry"] then
             end 
         end 
     })
-    local NoRecoil = GunModsSection:AddToggle({
-        Name = "No Recoil", 
-        Flag = "No Recoil", 
+    local NoRecoil = GunModsSection:AddToggle({ Name = "No Recoil", Flag = "No Recoil", 
         Callback = function(v) 
             if v then 
                 noRecoilEv = renderStepped:Connect(function()
@@ -575,9 +610,7 @@ if game.PlaceId == supportedGames["Weaponry"] then
         end 
     })
     local PlayerSpeed = PlayerSection:AddSlider({ Name = "Player Walkspeed", Flag = "Player Walkspeed", Value = 16, Min = 16, Max = 100, Callback = function(v) playerSpeed = v end })
-    local SetSpeed = PlayerSection:AddToggle({
-        Name = "Set Walkspeed",
-        Flag = "Set Walkspeed",
+    local SetSpeed = PlayerSection:AddToggle({ Name = "Set Walkspeed", Flag = "Set Walkspeed",
         Callback = function(v)
             if v then 
                 walkspeedEv = renderStepped:Connect(function()
@@ -611,10 +644,7 @@ if game.PlaceId == supportedGames["Weaponry"] then
             end 
         end
     })
-    local BoxESP = EspSection:CreateToggle({
-        Name = "Box ESP",
-        CurrentValue = false,
-        Flag = "Box ESP [Weaponry]", 
+    local BoxESP = EspSection:CreateToggle({ Name = "Box ESP", CurrentValue = false, Flag = "Box ESP [Weaponry]", 
         Callback = function(v)
             if v then 
                 for i, v in next, Players:GetPlayers() do 
@@ -687,10 +717,7 @@ if game.PlaceId == supportedGames["Weaponry"] then
             end 
         end 
     })
-    local TextESP = EspSection:CreateToggle({
-        Name = "Text ESP",
-        CurrentValue = false,
-        Flag = "Text ESP [Weaponry]", 
+    local TextESP = EspSection:CreateToggle({ Name = "Text ESP", CurrentValue = false, Flag = "Text ESP [Weaponry]", 
         Callback = function(v)
             if v then 
                 for i, v in next, Players:GetPlayers() do 
@@ -752,10 +779,7 @@ if game.PlaceId == supportedGames["Weaponry"] then
             end 
         end 
     })
-    local HealthBarESP = EspSection:CreateToggle({
-        Name = "Health Bar ESP",
-        CurrentValue = false,
-        Flag = "Health Bar ESP [Weaponry]", 
+    local HealthBarESP = EspSection:CreateToggle({ Name = "Health Bar ESP", CurrentValue = false, Flag = "Health Bar ESP [Weaponry]", 
         Callback = function(v)
             if v then 
                 for i, v in next, Players:GetPlayers() do 
@@ -882,6 +906,447 @@ if game.PlaceId == supportedGames["Weaponry"] then
         
         return oldNamecall(unpack(args))
     end)
+
+elseif game.PlaceId == supportedGames["War Tycoon"] then 
+    -- War Tycoon Feature Variables/Functions/Events Initialization:
+    local noFallDmg, gunMods, hasGunBeenShot, gunModsChildAddedEv,
+    characterAddedGunModsEv
+    local usedGuns = {} 
+
+    local function applyGunMods(tool, character)
+        VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.R, false, game)
+        VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.R, false, game)
+        local settings = tool:FindFirstChild("Settings", true)
+        if settings then
+            local gunSettings = require(settings)
+            
+            -- Set gun properties
+            gunSettings.Mode = "Auto"
+            gunSettings.FireModes = {Semi = false, Auto = true, Burst = false}
+            gunSettings.Ammo = math.huge
+            gunSettings.FireRate = 1e14  
+            gunSettings.BSpeed = 1e6     
+            gunSettings.DamageMultiplier = math.huge
+
+            -- No Recoil
+            gunSettings.MinRecoilPower = 0
+            gunSettings.VRecoil = {0, 0}
+            gunSettings.HRecoil = {0, 0}
+            gunSettings.MaxRecoilPower = 0
+            gunSettings.AimRecoilReduction = math.huge
+            gunSettings.RecoilPowerStepAmount = 0
+            gunSettings.RecoilPunch = 0
+
+            -- No Spread
+            gunSettings.MinSpread = 0
+            gunSettings.MaxSpread = 0
+        end
+
+        tool.Parent = localPlayer.Backpack 
+        localPlayer.Backpack[tool.Name].Parent = character
+    end
+
+    local GunModsSection = GeneralTab:CreateSection({ Name = "Gun Modifications", Side = "Right" })
+    local SilentAim = GeneralSection:AddToggle({ Name = "Silent Aim", Flag = "Silent Aim [War Tycoon]", Callback = function(v) silentAim = v end })
+    local Wallbang = GeneralSection:AddToggle({ Name = "Wallbang [SILENT AIM]", Flag = "Wallbang [War Tycoon]", Callback = function(v) wallbang = v end })
+    local NoFallDMG = GeneralSection:AddToggle({ Name = "No Fall DMG", Flag = "No Fall DMG [War Tycoon]", Callback = function(v) noFallDmg = v end })
+    local HitboxExpanderTorso = GeneralSection:AddToggle({ Name = "Hitbox Expander [TORSO]", Flag = "Hitbox Expander [TORSO WAR TYCOON]",
+        Callback = function(v)
+            if v then 
+                hitboxExpanderTorsoEv = RunService.RenderStepped:Connect(function()
+                    for i, v in next, Players:GetPlayers() do 
+                        if v ~= localPlayer and v.Team ~= localPlayer.Team and v.Character then 
+                            local character = v.Character 
+
+                            if character:FindFirstChild("HumanoidRootPart") then 
+                                local root = character.HumanoidRootPart 
+
+                                if root.Size ~= Vector3.new(25, 25, 25) then 
+                                    root.Size = Vector3.new(25, 25, 25) 
+                                    root.Transparency = 0.5
+                                    root.Color = Color3.fromRGB(255, 0, 0)
+                                end 
+                            end 
+                        end 
+
+                        if v.Team == localPlayer.Team and #Teams:GetChildren() > 0 then 
+                            local character = v.Character 
+
+                            if character:FindFirstChild("HumanoidRootPart") then 
+                                local root = character.HumanoidRootPart 
+
+                                if root.Transparency ~= 1 then 
+                                    root.Transparency = 1 
+                                end 
+                            end  
+                        end 
+
+                        if v.Team == localPlayer.Team and #Teams:GetChildren() == 0 then 
+                            local character = v.Character 
+
+                            if character:FindFirstChild("HumanoidRootPart") then 
+                                local root = character.HumanoidRootPart 
+
+                                if root.Size ~= Vector3.new(25, 25, 25) then 
+                                    root.Size = Vector3.new(25, 25, 25) 
+                                    root.Transparency = 0.5
+                                    root.Color = Color3.fromRGB(255, 0, 0)
+                                end 
+                            end 
+                        end 
+                    end 
+                end)
+
+            else 
+                if hitboxExpanderTorsoEv then hitboxExpanderTorsoEv:Disconnect(); hitboxExpanderTorsoEv = nil end 
+                for i, v in next, Players:GetPlayers() do 
+                    if localPlayer.Character then 
+                        local character = localPlayer.Character
+                        if character:FindFirstChild("HumanoidRootPart") then 
+                            local root = character.HumanoidRootPart 
+                            root.Size = Vector3.new(2, 2, 1) 
+                            repeat taskWait() root.Transparency = 1 until root.Transparency == 1
+                        end 
+                    end 
+                end 
+            end 
+        end
+    })
+
+    local GunMods = GunModsSection:AddToggle({ Name = "Gun Mods", Flag = "Gun Mods [War Tycoon]", 
+        Callback = function(v) 
+            gunMods = v 
+            if v then 
+                if localPlayer.Character then 
+                    StarterGui:SetCore("SendNotification", {
+                        Title = "Gun Mods",
+                        Text = "Shoot your gun!",
+                        Duration = 3
+                    })
+                    local character = localPlayer.Character 
+                
+                    if character:FindFirstChildWhichIsA("Tool") then 
+                        local tool = character:FindFirstChildWhichIsA("Tool")
+                        local toolName = Tool.Name 
+                        
+                        if tool:FindFirstChild("Settings", true) and require(tool:FindFirstChild("Settings", true)).Ammo ~= math.huge then 
+                            if not table.find(usedGuns, toolName) and not hasGunBeenShot then 
+                                repeat taskWait() until hasGunBeenShot
+                                table.insert(usedGuns, toolName)
+                                applyGunMods(tool, character)
+                            end
+                        end
+                    end 
+                
+                    gunModsChildAddedEv = character.ChildAdded:Connect(function(child)
+                        if child:IsA("Tool") then
+                            local tool = child
+                            local toolName = tool.Name
+                            if not table.find(usedGuns, child.Name) and not hasGunBeenShot then 
+                                if tool:FindFirstChild("Settings", true) and require(tool:FindFirstChild("Settings", true)).Ammo ~= math.huge then 
+                                    repeat taskWait() until hasGunBeenShot
+                                    table.insert(usedGuns, toolName)
+                                    applyGunMods(tool, character)
+                                end
+                            end 
+                
+                            if not table.find(usedGuns, child.Name) and hasGunBeenShot then 
+                                hasGunBeenShot = false 
+                                repeat taskWait() until hasGunBeenShot
+
+                                table.insert(usedGuns, toolName)
+                                applyGunMods(tool, character)
+                            end 
+                        end
+                    end)
+                end 
+                
+                characterAddedGunModsEv = localPlayer.CharacterAdded:Connect(function(character)
+                    hasGunBeenShot = false 
+                    usedGuns = {}
+                
+                    gunModsChildAddedEv = character.ChildAdded:Connect(function(child)
+                        if child:IsA("Tool") then
+                            local tool = child
+                            local toolName = tool.Name
+                            if not table.find(usedGuns, child.Name) and not hasGunBeenShot then 
+                                if tool:FindFirstChild("Settings", true) and require(tool:FindFirstChild("Settings", true)).Ammo ~= math.huge then 
+                                    repeat taskWait() until hasGunBeenShot
+                                    table.insert(usedGuns, toolName)
+                                    applyGunMods(tool, character)
+                                end
+                            end 
+                
+                            if not table.find(usedGuns, child.Name) and hasGunBeenShot then 
+                                hasGunBeenShot = false 
+                                repeat taskWait() until hasGunBeenShot
+                                table.insert(usedGuns, toolName)
+                                applyGunMods(tool, character)
+                            end 
+                        end
+                    end)
+                end)    
+            else 
+                if gunModsChildAddedEv then gunModsChildAddedEv:Disconnect(); gunModsChildAddedEv = nil end 
+                if characterAddedGunModsEv then characterAddedGunModsEv:Disconnect(); characterAddedGunModsEv = nil end     
+            end 
+        end 
+    })
+    local BoxESP = EspSection:CreateToggle({ Name = "Box ESP", CurrentValue = false, Flag = "Box ESP [Weaponry]", 
+        Callback = function(v)
+            if v then 
+                for i, v in next, Players:GetPlayers() do 
+                    if v ~= localPlayer then 
+                        addPlayerToDrawingCache("Square", v)
+                    end 
+                end 
+
+                boxPlayerAddedEv = playerAdded:Connect(function(player) addPlayerToDrawingCache("Square", player) end)
+                boxPlayerRemovingEv = playerRemoving:Connect(function(player) removePlayerDrawingCache("Square", player) end)
+
+                updateBoxEsp = renderStepped:Connect(function()
+                    for player, cachedDrawings in next, boxEspCache do 
+                        local isFFA = #Teams:GetChildren() == 0
+                        local displayed = false
+
+                        local boxOutline = cachedDrawings.boxEspOutline
+                        local box = cachedDrawings.boxEsp
+
+                        if player.Character then 
+                            local character = player.Character 
+                            local head = character:FindFirstChild("Head") 
+                            local humanoid = character:FindFirstChild("Humanoid")
+
+                            if head and humanoid then 
+                                local headPos, onScreen = wtvp(camera, head.Position)
+                                local origin, size = character:GetBoundingBox()
+                                local height = (camera.CFrame - camera.CFrame.Position) * Vector3.new(0, math.clamp(size.Y, 1, 10) / 2, 0)
+
+                                local bottom = wtvp(camera, origin.Position - height)
+                                local top = wtvp(camera, origin.Position + height)
+                                local newHeight = -math.abs(top.Y - bottom.Y)
+
+                                local newSize = Vector2.new(newHeight / 1.5, newHeight)
+                    
+                                if onScreen and humanoid.Health > 0 then 
+                                    box.Size = newSize
+                                    box.Position = Vector2.new(headPos.X - newSize.X / 2, headPos.Y - newSize.Y / 1.2)
+
+                                    boxOutline.Size = box.Size 
+                                    boxOutline.Position = box.Position
+                                    
+                                    boxOutline.Visible = (isFFA or localPlayer.Team ~= player.Team) and onScreen
+                                    box.Visible = boxOutline.Visible
+
+                                else 
+                                    boxOutline.Visible = false 
+                                    box.Visible = false
+                                end 
+
+                            else 
+                                boxOutline.Visible = false 
+                                box.Visible = false
+                            end 
+
+                        else 
+                            boxOutline.Visible = false 
+                            box.Visible = false
+                        end 
+                    end 
+                end)
+            else 
+                if boxPlayerAddedEv then boxPlayerAddedEv:Disconnect(); boxPlayerAddedEv = nil end 
+                if boxPlayerRemovingEv then boxPlayerRemovingEv:Disconnect(); boxPlayerRemovingEv = nil end 
+                if updateBoxEsp then updateBoxEsp:Disconnect(); updateBoxEsp = nil end 
+
+                for i, v in next, Players:GetPlayers() do 
+                    removePlayerDrawingCache("Square", v)
+                end 
+            end 
+        end 
+    })
+    local TextESP = EspSection:CreateToggle({ Name = "Text ESP", CurrentValue = false, Flag = "Text ESP [Weaponry]", 
+        Callback = function(v)
+            if v then 
+                for i, v in next, Players:GetPlayers() do 
+                    if v ~= localPlayer then 
+                        addPlayerToDrawingCache("Text", v)
+                    end 
+                end 
+
+                textPlayerAddedEv = playerAdded:Connect(function(player) addPlayerToDrawingCache("Text", player) end)
+                textPlayerRemovingEv = playerRemoving:Connect(function(player) removePlayerDrawingCache("Text", player) end)
+
+                updateTextEsp = renderStepped:Connect(function()
+                    for player, cachedDrawings in next, textEspCache do 
+                        local textEsp = cachedDrawings.textEsp
+                        local isFFA = #Teams:GetChildren() == 0
+
+                        if player.Character then 
+                            local character = player.Character 
+                            local head = character:FindFirstChild("Head") 
+                            local humanoid = character:FindFirstChild("Humanoid")
+                            local root = character:FindFirstChild("HumanoidRootPart")
+
+                            if head and humanoid and root then 
+                                local headPos, onScreen = wtvp(camera, head.Position)
+                                local rootPos, onScreen = wtvp(camera, root.Position)
+
+                                if onScreen and humanoid.Health > 0 then 
+                                    local distanceFromHeadPos = round(localPlayer:DistanceFromCharacter(head.Position))
+                                    local health = round(humanoid.Health)
+                                    local maxHealth = round(humanoid.MaxHealth)
+
+                                    textEsp.Text = "[" .. player.Name .. "]" .. "[" .. distanceFromHeadPos .. "] \n [" .. health .. "/" .. maxHealth .. "]"
+                                    textEsp.Color = Color3.fromRGB(255, 255, 255)
+                                    textEsp.Position = Vector2.new(headPos.X, headPos.Y)
+                                    textEsp.Visible = (isFFA or localPlayer.Team ~= player.Team) and onScreen
+
+                                else 
+                                    textEsp.Visible = false 
+                                end 
+
+                            else 
+                                textEsp.Visible = false 
+                            end 
+
+                        else 
+                            textEsp.Visible = false 
+                        end 
+                    end 
+                end)
+
+            else 
+                if textPlayerAddedEv then textPlayerAddedEv:Disconnect(); textPlayerAddedEv = nil end 
+                if textPlayerRemovingEv then textPlayerRemovingEv:Disconnect(); textPlayerRemovingEv = nil end 
+                if updateTextEsp then updateTextEsp:Disconnect(); updateTextEsp = nil end 
+
+                for i, v in next, Players:GetPlayers() do 
+                    removePlayerDrawingCache("Text", v)
+                end 
+            end 
+        end 
+    })
+    local HealthBarESP = EspSection:CreateToggle({ Name = "Health Bar ESP", CurrentValue = false, Flag = "Health Bar ESP [Weaponry]", 
+        Callback = function(v)
+            if v then 
+                for i, v in next, Players:GetPlayers() do 
+                    if v ~= localPlayer then 
+                        addPlayerToDrawingCache("Health Bar", v)
+                    end 
+                end 
+
+                healthBarPlayerAddedEv = playerAdded:Connect(function(player) addPlayerToDrawingCache("Health Bar", player) end)
+                healthBarPlayerRemovingEv = playerRemoving:Connect(function(player) removePlayerDrawingCache("Health Bar", player) end)
+
+                updateHealthBarEsp = renderStepped:Connect(function()
+                    for player, cachedDrawings in next, healthBarEspCache do 
+                        local isFFA = #Teams:GetChildren() == 0
+                        local healthBarOutline = cachedDrawings.healthBarOutline
+                        local healthBar = cachedDrawings.healthBar
+
+                        if player.Character then 
+                            local character = player.Character 
+                            local head = character:FindFirstChild("Head") 
+                            local humanoid = character:FindFirstChild("Humanoid")
+ 
+                            if head and humanoid then 
+                                local headPos, onScreen = wtvp(camera, head.Position)
+                                local origin, size = character:GetBoundingBox()
+                                local height = (camera.CFrame - camera.CFrame.Position) * Vector3.new(0, math.clamp(size.Y, 1, 10) / 2, 0)
+
+                                local bottom = wtvp(camera, origin.Position - height)
+                                local top = wtvp(camera, origin.Position + height)
+                                local newHeight = -math.abs(top.Y - bottom.Y)
+
+                                local newSize = Vector2.new(newHeight / 1.5, newHeight)           
+                                local healthBarWidth = 10
+                                local healthBarHeight = newSize.Y * (humanoid.Health / humanoid.MaxHealth)
+
+                                local healthBarX = (headPos.X - newSize.X / 2) + newSize.X - 10
+                                local healthBarY = (headPos.Y - newSize.Y / 1.2)
+                                local healthBarFraction = humanoid.Health / humanoid.MaxHealth
+
+                                if onScreen and humanoid.Health > 0 then 
+                                    healthBarOutline.From = Vector2.new(healthBarX, healthBarY)
+                                    healthBarOutline.To = Vector2.new(healthBarX, healthBarY + newSize.Y)
+                                    healthBarOutline.Visible = (isFFA or localPlayer.Team ~= player.Team) and onScreen
+                                    healthBarOutline.ZIndex = 1 
+
+                                    healthBar.From = Vector2.new(healthBarX, healthBarY)
+                                    healthBar.To = Vector2.new(healthBarX, healthBarY + healthBarHeight)
+                                    healthBar.Color = Color3.new(1, 0, 0):Lerp(Color3.new(0, 1, 0), healthBarFraction)
+                                    healthBar.Visible = (isFFA or localPlayer.Team ~= player.Team) and onScreen and healthBarOutline.Visible
+                                    healthBar.ZIndex = 2 
+
+                                else 
+                                    healthBar.Visible = false
+                                    healthBarOutline.Visible = false 
+                                end 
+
+                            else 
+                                healthBar.Visible = false
+                                healthBarOutline.Visible = false 
+                            end 
+
+                        else 
+                            healthBar.Visible = false
+                            healthBarOutline.Visible = false 
+                        end                    
+                    end 
+                end)
+
+            else 
+                if healthBarPlayerAddedEv then healthBarPlayerAddedEv:Disconnect(); healthBarPlayerAddedEv = nil end 
+                if healthBarPlayerRemovingEv then healthBarPlayerRemovingEv:Disconnect(); healthBarPlayerRemovingEv = nil end 
+                if updateHealthBarEsp then updateHealthBarEsp:Disconnect(); updateHealthBarEsp = nil end 
+
+                for i, v in next, Players:GetPlayers() do 
+                    removePlayerDrawingCache("Health Bar", v)
+                end 
+            end 
+        end 
+    })
+    -- Essential Hooks for Gun Mods/No Fall DMG/Silent Aim/Wallbang
+    local oldNamecall; oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
+        if noFallDmg then 
+            if self.Name == "FDMG" then return end
+        end 
+        return oldNamecall(self, ...)
+    end)
+
+    local oldNamecall; oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
+        if gunMods then 
+            if self.Name == "FireGun" then hasGunBeenShot = true end
+        end 
+        return oldNamecall(self, ...)
+    end)
+
+    local oldNamecall; oldNamecall = hookmetamethod(game, "__namecall", function(...)
+        local args = { ... }
+        if silentAim then
+            if callMethod() == "Raycast" and getNearestPlayerHead() then 
+                local closestPlayerHead = getNearestPlayerHead()
+                args[2] = camera.CFrame.Position
+                args[3] = (closestPlayerHead.Position - args[2]).Unit * 1000000
+            end
+        end 
+        return oldNamecall(unpack(args))
+    end)
+
+    local oldNamecall; oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
+        local args = { ... }
+        if wallbang then
+            if callMethod() == "FireServer" and getNearestPlayerHead() and self.Name == "BulletHit" then 
+                local closestPlayerHead = getNearestPlayerHead()
+
+                args[2] = closestPlayerHead
+                args[3] = closestPlayerHead.Position
+            end
+        end 
+        return oldNamecall(self, unpack(args))
+    end)
+
 end 
 
 queueTeleport([[loadstring(game:HttpGet("https://raw.githubusercontent.com/Anomaly-cool/robloxScripts/main/anomaly.lua"))()]])

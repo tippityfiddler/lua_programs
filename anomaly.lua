@@ -2760,14 +2760,21 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
                                     removePlayerDrawingCache("Chest Text", chest) 
                                 end 
                             end)
+
+                            local originalParent = chest.Parent.Parent
+                            chestParentChangeEv = chest.AncestryChanged:Connect(function(child, parent)
+                                if parent.Parent.Parent and parent.Parent.Parent.Name == "RS" then
+                                    removePlayerDrawingCache("Chest Text", chest)
+                                end
+                            end)
                         end 
 
                         chestAddedEv = chestFolder.ChildAdded:Connect(function(chestChild) 
                             if chestChild.Name:find("Chest") or chestChild.Name:find("Storage") then 
                                 addPlayerToDrawingCache("Chest Text", chestChild) 
-                                local originalParent = chestChild.Parent 
+                                local originalParent = chestChild.Parent.Parent
                                 chestParentChangeEv = chestChild.AncestryChanged:Connect(function(child, parent)
-                                    if originalParent ~= parent then
+                                    if parent.Parent.Parent and parent.Parent.Parent.Name == "RS" then
                                         removePlayerDrawingCache("Chest Text", chestChild)
                                     end
                                 end)
@@ -2793,10 +2800,9 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
                                 if not chest:FindFirstChild("Open") then 
                                     addPlayerToDrawingCache("Chest Text", chest)
                                 end 
-                                local originalParent = chest.Parent.Parent.Parent
-                                chestParentChangeEv = chest.AncestryChanged:Connect(function(child, parent) 
-                                    print(parent.Parent.Parent)
-                                    if originalParent ~= parent.Parent.Parent then
+                                local originalParent = chest.Parent.Parent
+                                chestParentChangeEv = chest.AncestryChanged:Connect(function(child, parent)
+                                    if parent.Parent.Parent and parent.Parent.Parent.Name == "RS" then
                                         removePlayerDrawingCache("Chest Text", chest)
                                     end
                                 end)
@@ -2810,17 +2816,16 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
                             chestAddedEv = chestFolder.ChildAdded:Connect(function(chestChild) 
                                 if chestChild.Name:find("Chest") or chestChild.Name:find("Storage") then 
                                     addPlayerToDrawingCache("Chest Text", chestChild) 
-                                    local originalParent = chestChild.Parent 
+                                    local originalParent = chestChild.Parent.Parent
                                     chestParentChangeEv = chestChild.AncestryChanged:Connect(function(child, parent)
-                                        print(parent.Parent.Parent)
-                                        if originalParent ~= parent.Parent.Parent then
-                                            removePlayerDrawingCache("Chest Text", chest)
+                                        print(originalParent, parent.Parent.Parent)
+                                        if originalParent and originalParent ~= parent.Parent.Parent then
+                                            removePlayerDrawingCache("Chest Text", chestChild)
                                         end
                                     end)
 
                                     chestChildAddedEv = chestChild.ChildAdded:Connect(function(child)
                                         if child.Name == "Open" then removePlayerDrawingCache("Chest Text", chestChild) end 
-
                                     end)
                                 end 
                             end)
@@ -2864,7 +2869,7 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
                 if chestAddedEv then chestAddedEv:Disconnect(); chestAddedEv = nil end 
                 if chestRemovedEv then chestRemovedEv:Disconnect(); chestRemovedEv = nil end 
                 if chestFolderAddedEv then chestFolderAddedEv:Disconnect(); chestFolderAddedEv = nil end 
-
+                if chestParentChangeEv then chestParentChangeEv:Disconnect(); chestParentChangeEv = nil end 
                 for i, v in next, mapFolder:GetDescendants() do 
                     if v.Name:find("Chest") or v.Name:find("Storage") then 
                         removePlayerDrawingCache("Chest Text", v)

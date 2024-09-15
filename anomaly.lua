@@ -62,10 +62,11 @@ local random = math.random
 
 local callingScript = getcallingscript 
 local httpRequest = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
-local queueteleport = (syn and syn.queue_on_teleport) or queue_on_teleport or (fluxus and fluxus.queue_on_teleport)
+local queueTeleport = (syn and syn.queue_on_teleport) or queue_on_teleport or (fluxus and fluxus.queue_on_teleport)
 local playerAdded = Players.PlayerAdded 
+
 local playerRemoving = Players.PlayerRemoving
-local queue
+
 -- Essential Hooks and Functions:
 local oldNamecall; oldNamecall = hookmetamethod(game, "__namecall", function(...)
     if callMethod() == "Kick" or callMethod():lower() == "kick" then return end
@@ -881,3 +882,5 @@ if game.PlaceId == supportedGames["Weaponry"] then
         return oldNamecall(unpack(args))
     end)
 end 
+
+queueTeleport([[loadstring(game:HttpGet("https://raw.githubusercontent.com/Asxhes/robloxScripts/main/anomaly.lua"))()]])

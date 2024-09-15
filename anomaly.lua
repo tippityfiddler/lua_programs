@@ -30,6 +30,9 @@ updateHealthBarEsp, showCursor, noFogEv, fullBrightEv, hitboxExpanderTorsoEv, mv
 local textEspCache = {}
 local boxEspCache = {}
 local healthBarEspCache = {}
+local boatEspCache = {}
+local chestEspCache = {}
+
 local supportedGames = {
     ["Weaponry"] = 3297964905,
     ["War Tycoon"] = 4639625707,
@@ -80,6 +83,10 @@ local getRegistry = debug.getregistry
 local getNilInstances = getnilinstances 
 local getInfo = debug.getinfo 
 local inputBegan = UserInputService.InputBegan
+local next = next 
+local vector2New = Vector2.new 
+local vector3New = Vector3.new
+
 -- Essential Hooks and Functions:
 local oldNamecall; oldNamecall = hookmetamethod(game, "__namecall", function(...)
     if callMethod() == "Kick" or callMethod():lower() == "kick" then return end
@@ -96,8 +103,8 @@ local function universalHitboxExpander()
             if character:FindFirstChild("HumanoidRootPart") then 
                 local root = character.HumanoidRootPart 
 
-                if root.Size ~= Vector3.new(15, 15, 15) then 
-                    root.Size = Vector3.new(15, 15, 15) 
+                if root.Size ~= vector3New(15, 15, 15) then 
+                    root.Size = vector3New(15, 15, 15) 
                     root.Transparency = 0.5
                     root.Color = Color3.fromRGB(255, 0, 0)
                 end 
@@ -122,8 +129,8 @@ local function universalHitboxExpander()
             if character:FindFirstChild("HumanoidRootPart") then 
                 local root = character.HumanoidRootPart 
 
-                if root.Size ~= Vector3.new(15, 15, 15) then 
-                    root.Size = Vector3.new(15, 15, 15) 
+                if root.Size ~= vector3New(15, 15, 15) then 
+                    root.Size = vector3New(15, 15, 15) 
                     root.Transparency = 0.5
                     root.Color = Color3.fromRGB(255, 0, 0)
                 end 
@@ -197,7 +204,7 @@ local function antiAFK()
     else
         idled:Connect(function()
             VirtualUser:CaptureController()
-            VirtualUser:ClickButton2(Vector2.new(0, 0))
+            VirtualUser:ClickButton2(vector2New(0, 0))
         end)
     end
 end
@@ -224,7 +231,7 @@ local function getNearestPlayerHead()
                                 local headPos, onScreen = wtvp(camera, head.Position)
                 
                                 if onScreen then 
-                                    local distanceFromHead = (Vector2.new(mouse.X, mouse.Y) - Vector2.new(headPos.X, headPos.Y)).Magnitude
+                                    local distanceFromHead = (vector2New(mouse.X, mouse.Y) - vector2New(headPos.X, headPos.Y)).Magnitude
                 
                                     if distanceFromHead < distance then 
                                         distance = distanceFromHead
@@ -243,7 +250,7 @@ local function getNearestPlayerHead()
                                 local headPos, onScreen = wtvp(camera, head.Position)
                 
                                 if onScreen then 
-                                    local distanceFromHead = (Vector2.new(mouse.X, mouse.Y) - Vector2.new(headPos.X, headPos.Y)).Magnitude
+                                    local distanceFromHead = (vector2New(mouse.X, mouse.Y) - vector2New(headPos.X, headPos.Y)).Magnitude
                 
                                     if distanceFromHead < distance then 
                                         distance = distanceFromHead
@@ -268,7 +275,7 @@ local function getNearestPlayerHead()
                                 
                                 if not mvsdKillAll and silentAim then 
                                     if onScreen then 
-                                        local distanceFromHead = (Vector2.new(mouse.X, mouse.Y) - Vector2.new(headPos.X, headPos.Y)).Magnitude
+                                        local distanceFromHead = (vector2New(mouse.X, mouse.Y) - vector2New(headPos.X, headPos.Y)).Magnitude
                     
                                         if distanceFromHead < distance then 
                                             distance = distanceFromHead
@@ -324,7 +331,7 @@ local function addPlayerToDrawingCache(name, player) -- name refers to the drawi
                     Visible = false,
                     Center = true, 
                     Outline = true, 
-                    Position = Vector2.new(0, 0),
+                    Position = vector2New(0, 0),
                     Size = 14,
                     Font = 3
                 })
@@ -356,21 +363,47 @@ local function addPlayerToDrawingCache(name, player) -- name refers to the drawi
             healthBarEspCache[player] = {
                 healthBarOutline = createDrawing("Line", {
                     Visible = false,
-                    From = Vector2.new(0, 0),
-                    To = Vector2.new(0, 0),
+                    From = vector2New(0, 0),
+                    To = vector2New(0, 0),
                     Color = Color3.fromRGB(0, 0, 0), 
                     Thickness = 6
                 }),
 
                 healthBar = createDrawing("Line", {
                     Visible = false,
-                    From = Vector2.new(0, 0),
-                    To = Vector2.new(0, 0),
+                    From = vector2New(0, 0),
+                    To = vector2New(0, 0),
                     Color = Color3.fromRGB(0, 255, 0), 
                     Thickness = 4
                 })
             } 
         end
+    elseif name == "Boat Text" then 
+        boatEspCache[player] = {
+            textEsp = createDrawing("Text", { 
+                Color = Color3.fromRGB(255, 0, 0),
+                Text = "", 
+                Visible = false,
+                Center = true, 
+                Outline = true, 
+                Position = vector2New(0, 0),
+                Size = 14,
+                Font = 3
+            })
+        }
+    elseif name == "Chest Text" then 
+        chestEspCache[player] = {
+            textEsp = createDrawing("Text", { 
+                Color = Color3.fromRGB(255, 0, 0),
+                Text = "", 
+                Visible = false,
+                Center = true, 
+                Outline = true, 
+                Position = vector2New(0, 0),
+                Size = 14,
+                Font = 3
+            })
+        }
     end 
 end 
 
@@ -392,6 +425,11 @@ local function removePlayerDrawingCache(name, player)
             healthBarEspCache[player].healthBar:Remove()
             healthBarEspCache[player] = nil
         end     
+    elseif name == "Boat Text" then 
+        if boatEspCache[player] then
+            boatEspCache[player].textEsp:Remove()
+            boatEspCache[player] = nil
+        end 
     end 
 end 
 
@@ -430,7 +468,7 @@ local FullBright = LightingSection:AddToggle({ Name = "Full Bright", Flag = "Ful
 })
 local PlayerSection = GeneralTab:CreateSection({ Name = "Local Player", Side = "Right" })
 local GeneralSection = GeneralTab:CreateSection({ Name = "General" })
-local EspSection = GeneralTab:CreateSection({ Name = "Extra Sensory Perception" })
+local EspSection = GeneralTab:CreateSection({ Name = "Extra Sensory Perception", Side = "Right" })
 
 local RejoinServer = GeneralSection:AddButton({ Name = "Rejoin Server", Callback = function() rejoinServer() end })
 local ServerHop = GeneralSection:AddButton({ Name = "Server Hop", Callback = function() serverHop() end })
@@ -552,14 +590,14 @@ if game.PlaceId == supportedGames["Weaponry"] then
                                     if #Teams:GetChildren() > 0 and localPlayer.Team ~= v.Team then
                                         if hitbox:FindFirstChild("HitboxBody") then
                                             hitbox.HitboxBody.Transparency = 0.5
-                                            hitbox.HitboxBody.Size = Vector3.new(25, 25, 25)
+                                            hitbox.HitboxBody.Size = vector3New(25, 25, 25)
                                         end
                                     end
 
                                     if #Teams:GetChildren() == 0 then
                                         if hitbox:FindFirstChild("HitboxBody") then
                                             hitbox.HitboxBody.Transparency = 0.5
-                                            hitbox.HitboxBody.Size = Vector3.new(25, 25, 25)
+                                            hitbox.HitboxBody.Size = vector3New(25, 25, 25)
                                         end
                                     end
 
@@ -579,8 +617,8 @@ if game.PlaceId == supportedGames["Weaponry"] then
                     if hitbox:FindFirstChild("HitboxBody") then
                         repeat taskWait()
                             hitbox.HitboxBody.Transparency = 1
-                            hitbox.HitboxBody.Size = Vector3.new(4.1, 2, 1.1)
-                        until hitbox.HitboxBody.Transparency == 1 and hitbox.HitboxBody.Size == Vector3.new(4.1, 2, 1.1)
+                            hitbox.HitboxBody.Size = vector3New(4.1, 2, 1.1)
+                        until hitbox.HitboxBody.Transparency == 1 and hitbox.HitboxBody.Size == vector3New(4.1, 2, 1.1)
                     end
                 end
             end 
@@ -601,14 +639,14 @@ if game.PlaceId == supportedGames["Weaponry"] then
                                     if #Teams:GetChildren() > 0 and localPlayer.Team ~= v.Team then
                                         if hitbox:FindFirstChild("HitboxHead") then
                                             hitbox.HitboxHead.Transparency = 0.5
-                                            hitbox.HitboxHead.Size = Vector3.new(25, 25, 25)
+                                            hitbox.HitboxHead.Size = vector3New(25, 25, 25)
                                         end
                                     end
 
                                     if #Teams:GetChildren() == 0 then
                                         if hitbox:FindFirstChild("HitboxHead") then
                                             hitbox.HitboxHead.Transparency = 0.5
-                                            hitbox.HitboxHead.Size = Vector3.new(25, 25, 25)
+                                            hitbox.HitboxHead.Size = vector3New(25, 25, 25)
                                         end
                                     end
 
@@ -628,8 +666,8 @@ if game.PlaceId == supportedGames["Weaponry"] then
                     if hitbox:FindFirstChild("HitboxHead") then
                         repeat taskWait()
                             hitbox.HitboxHead.Transparency = 1
-                            hitbox.HitboxHead.Size = Vector3.new(4.1, 2, 1.1)
-                        until hitbox.HitboxHead.Transparency == 1 and hitbox.HitboxHead.Size == Vector3.new(4.1, 2, 1.1)
+                            hitbox.HitboxHead.Size = vector3New(4.1, 2, 1.1)
+                        until hitbox.HitboxHead.Transparency == 1 and hitbox.HitboxHead.Size == vector3New(4.1, 2, 1.1)
                     end
                 end
             end 
@@ -681,28 +719,28 @@ if game.PlaceId == supportedGames["Weaponry"] then
                     local primary, secondary = getWeaponProperties()
                     if primary then 
                         primary.WeaponStats.Spread = {
-                            [1] = Vector2.new(0, 0),
-                            [2] = Vector2.new(0, 0),
-                            [3] = Vector2.new(0, 0),
-                            [4] = Vector2.new(0, 0),
-                            [5] = Vector2.new(0, 0),
-                            [6] = Vector2.new(0, 0),
-                            [7] = Vector2.new(0, 0),
-                            [8] = Vector2.new(0, 0),
-                            [9] = Vector2.new(0, 0)
+                            [1] = vector2New(0, 0),
+                            [2] = vector2New(0, 0),
+                            [3] = vector2New(0, 0),
+                            [4] = vector2New(0, 0),
+                            [5] = vector2New(0, 0),
+                            [6] = vector2New(0, 0),
+                            [7] = vector2New(0, 0),
+                            [8] = vector2New(0, 0),
+                            [9] = vector2New(0, 0)
                         }
                     end 
                     if secondary then 
                         secondary.WeaponStats.Spread = {
-                            [1] = Vector2.new(0, 0),
-                            [2] = Vector2.new(0, 0),
-                            [3] = Vector2.new(0, 0),
-                            [4] = Vector2.new(0, 0),
-                            [5] = Vector2.new(0, 0),
-                            [6] = Vector2.new(0, 0),
-                            [7] = Vector2.new(0, 0),
-                            [8] = Vector2.new(0, 0),
-                            [9] = Vector2.new(0, 0)
+                            [1] = vector2New(0, 0),
+                            [2] = vector2New(0, 0),
+                            [3] = vector2New(0, 0),
+                            [4] = vector2New(0, 0),
+                            [5] = vector2New(0, 0),
+                            [6] = vector2New(0, 0),
+                            [7] = vector2New(0, 0),
+                            [8] = vector2New(0, 0),
+                            [9] = vector2New(0, 0)
                         }
                     end 
                 end)
@@ -792,17 +830,17 @@ if game.PlaceId == supportedGames["Weaponry"] then
                             if head and humanoid then 
                                 local headPos, onScreen = wtvp(camera, head.Position)
                                 local origin, size = character:GetBoundingBox()
-                                local height = (camera.CFrame - camera.CFrame.Position) * Vector3.new(0, math.clamp(size.Y, 1, 10) / 2, 0)
+                                local height = (camera.CFrame - camera.CFrame.Position) * vector3New(0, math.clamp(size.Y, 1, 10) / 2, 0)
 
                                 local bottom = wtvp(camera, origin.Position - height)
                                 local top = wtvp(camera, origin.Position + height)
                                 local newHeight = -math.abs(top.Y - bottom.Y)
 
-                                local newSize = Vector2.new(newHeight / 1.5, newHeight)
+                                local newSize = vector2New(newHeight / 1.5, newHeight)
                     
                                 if onScreen and humanoid.Health > 0 then 
                                     box.Size = newSize
-                                    box.Position = Vector2.new(headPos.X - newSize.X / 2, headPos.Y - newSize.Y / 1.2)
+                                    box.Position = vector2New(headPos.X - newSize.X / 2, headPos.Y - newSize.Y / 1.2)
 
                                     boxOutline.Size = box.Size 
                                     boxOutline.Position = box.Position
@@ -871,7 +909,7 @@ if game.PlaceId == supportedGames["Weaponry"] then
 
                                     textEsp.Text = "[" .. player.Name .. "]" .. "[" .. distanceFromHeadPos .. "] \n [" .. health .. "/" .. maxHealth .. "]"
                                     textEsp.Color = Color3.fromRGB(255, 255, 255)
-                                    textEsp.Position = Vector2.new(headPos.X, headPos.Y)
+                                    textEsp.Position = vector2New(headPos.X, headPos.Y)
                                     textEsp.Visible = (isFFA or localPlayer.Team ~= player.Team) and onScreen
 
                                 else 
@@ -925,13 +963,13 @@ if game.PlaceId == supportedGames["Weaponry"] then
                             if head and humanoid then 
                                 local headPos, onScreen = wtvp(camera, head.Position)
                                 local origin, size = character:GetBoundingBox()
-                                local height = (camera.CFrame - camera.CFrame.Position) * Vector3.new(0, math.clamp(size.Y, 1, 10) / 2, 0)
+                                local height = (camera.CFrame - camera.CFrame.Position) * vector3New(0, math.clamp(size.Y, 1, 10) / 2, 0)
 
                                 local bottom = wtvp(camera, origin.Position - height)
                                 local top = wtvp(camera, origin.Position + height)
                                 local newHeight = -math.abs(top.Y - bottom.Y)
 
-                                local newSize = Vector2.new(newHeight / 1.5, newHeight)           
+                                local newSize = vector2New(newHeight / 1.5, newHeight)           
                                 local healthBarWidth = 10
                                 local healthBarHeight = newSize.Y * (humanoid.Health / humanoid.MaxHealth)
 
@@ -940,13 +978,13 @@ if game.PlaceId == supportedGames["Weaponry"] then
                                 local healthBarFraction = humanoid.Health / humanoid.MaxHealth
 
                                 if onScreen and humanoid.Health > 0 then 
-                                    healthBarOutline.From = Vector2.new(healthBarX, healthBarY)
-                                    healthBarOutline.To = Vector2.new(healthBarX, healthBarY + newSize.Y)
+                                    healthBarOutline.From = vector2New(healthBarX, healthBarY)
+                                    healthBarOutline.To = vector2New(healthBarX, healthBarY + newSize.Y)
                                     healthBarOutline.Visible = (isFFA or localPlayer.Team ~= player.Team) and onScreen
                                     healthBarOutline.ZIndex = 1 
 
-                                    healthBar.From = Vector2.new(healthBarX, healthBarY)
-                                    healthBar.To = Vector2.new(healthBarX, healthBarY + healthBarHeight)
+                                    healthBar.From = vector2New(healthBarX, healthBarY)
+                                    healthBar.To = vector2New(healthBarX, healthBarY + healthBarHeight)
                                     healthBar.Color = Color3.new(1, 0, 0):Lerp(Color3.new(0, 1, 0), healthBarFraction)
                                     healthBar.Visible = (isFFA or localPlayer.Team ~= player.Team) and onScreen and healthBarOutline.Visible
                                     healthBar.ZIndex = 2 
@@ -1084,7 +1122,7 @@ elseif game.PlaceId == supportedGames["War Tycoon"] then
                         local character = v.Character
                         if character:FindFirstChild("HumanoidRootPart") then 
                             local root = character.HumanoidRootPart 
-                            repeat taskWait() root.Transparency = 1; root.Size = Vector3.new(2, 2, 1)  until root.Transparency == 1
+                            repeat taskWait() root.Transparency = 1; root.Size = vector3New(2, 2, 1)  until root.Transparency == 1
                         end 
                     end 
                 end 
@@ -1199,17 +1237,17 @@ elseif game.PlaceId == supportedGames["War Tycoon"] then
                             if head and humanoid then 
                                 local headPos, onScreen = wtvp(camera, head.Position)
                                 local origin, size = character:GetBoundingBox()
-                                local height = (camera.CFrame - camera.CFrame.Position) * Vector3.new(0, math.clamp(size.Y, 1, 10) / 2, 0)
+                                local height = (camera.CFrame - camera.CFrame.Position) * vector3New(0, math.clamp(size.Y, 1, 10) / 2, 0)
 
                                 local bottom = wtvp(camera, origin.Position - height)
                                 local top = wtvp(camera, origin.Position + height)
                                 local newHeight = -math.abs(top.Y - bottom.Y)
 
-                                local newSize = Vector2.new(newHeight / 1.5, newHeight)
+                                local newSize = vector2New(newHeight / 1.5, newHeight)
                     
                                 if onScreen and humanoid.Health > 0 then 
                                     box.Size = newSize
-                                    box.Position = Vector2.new(headPos.X - newSize.X / 2, headPos.Y - newSize.Y / 1.2)
+                                    box.Position = vector2New(headPos.X - newSize.X / 2, headPos.Y - newSize.Y / 1.2)
 
                                     boxOutline.Size = box.Size 
                                     boxOutline.Position = box.Position
@@ -1278,7 +1316,7 @@ elseif game.PlaceId == supportedGames["War Tycoon"] then
 
                                     textEsp.Text = "[" .. player.Name .. "]" .. "[" .. distanceFromHeadPos .. "] \n [" .. health .. "/" .. maxHealth .. "]"
                                     textEsp.Color = Color3.fromRGB(255, 255, 255)
-                                    textEsp.Position = Vector2.new(headPos.X, headPos.Y)
+                                    textEsp.Position = vector2New(headPos.X, headPos.Y)
                                     textEsp.Visible = (isFFA or localPlayer.Team ~= player.Team) and onScreen
 
                                 else 
@@ -1332,13 +1370,13 @@ elseif game.PlaceId == supportedGames["War Tycoon"] then
                             if head and humanoid then 
                                 local headPos, onScreen = wtvp(camera, head.Position)
                                 local origin, size = character:GetBoundingBox()
-                                local height = (camera.CFrame - camera.CFrame.Position) * Vector3.new(0, math.clamp(size.Y, 1, 10) / 2, 0)
+                                local height = (camera.CFrame - camera.CFrame.Position) * vector3New(0, math.clamp(size.Y, 1, 10) / 2, 0)
 
                                 local bottom = wtvp(camera, origin.Position - height)
                                 local top = wtvp(camera, origin.Position + height)
                                 local newHeight = -math.abs(top.Y - bottom.Y)
 
-                                local newSize = Vector2.new(newHeight / 1.5, newHeight)           
+                                local newSize = vector2New(newHeight / 1.5, newHeight)           
                                 local healthBarWidth = 10
                                 local healthBarHeight = newSize.Y * (humanoid.Health / humanoid.MaxHealth)
 
@@ -1347,13 +1385,13 @@ elseif game.PlaceId == supportedGames["War Tycoon"] then
                                 local healthBarFraction = humanoid.Health / humanoid.MaxHealth
 
                                 if onScreen and humanoid.Health > 0 then 
-                                    healthBarOutline.From = Vector2.new(healthBarX, healthBarY)
-                                    healthBarOutline.To = Vector2.new(healthBarX, healthBarY + newSize.Y)
+                                    healthBarOutline.From = vector2New(healthBarX, healthBarY)
+                                    healthBarOutline.To = vector2New(healthBarX, healthBarY + newSize.Y)
                                     healthBarOutline.Visible = (isFFA or localPlayer.Team ~= player.Team) and onScreen
                                     healthBarOutline.ZIndex = 1 
 
-                                    healthBar.From = Vector2.new(healthBarX, healthBarY)
-                                    healthBar.To = Vector2.new(healthBarX, healthBarY + healthBarHeight)
+                                    healthBar.From = vector2New(healthBarX, healthBarY)
+                                    healthBar.To = vector2New(healthBarX, healthBarY + healthBarHeight)
                                     healthBar.Color = Color3.new(1, 0, 0):Lerp(Color3.new(0, 1, 0), healthBarFraction)
                                     healthBar.Visible = (isFFA or localPlayer.Team ~= player.Team) and onScreen and healthBarOutline.Visible
                                     healthBar.ZIndex = 2 
@@ -1464,7 +1502,7 @@ elseif game.PlaceId == supportedGames["MVSD"]["Default Server"] or game.PlaceId 
                             local part = getNearestPlayerHead():FindFirstChild("Part")
                             if part then
                                 local shootRemote = ReplicatedStorage.Remotes.Shoot
-                                local args = { [1] = root.Position, [2] = Vector3.new(-210.20181274414062, 172.1002197265625, -92.3746337890625), [3] = part, [4] = part.Position }
+                                local args = { [1] = root.Position, [2] = vector3New(-210.20181274414062, 172.1002197265625, -92.3746337890625), [3] = part, [4] = part.Position }
                                 shootRemote:FireServer(unpack(args)) 
                             end
                         end
@@ -1593,17 +1631,17 @@ elseif game.PlaceId == supportedGames["MVSD"]["Default Server"] or game.PlaceId 
                             if head and humanoid then 
                                 local headPos, onScreen = wtvp(camera, head.Position)
                                 local origin, size = character:GetBoundingBox()
-                                local height = (camera.CFrame - camera.CFrame.Position) * Vector3.new(0, math.clamp(size.Y, 1, 10) / 2, 0)
+                                local height = (camera.CFrame - camera.CFrame.Position) * vector3New(0, math.clamp(size.Y, 1, 10) / 2, 0)
 
                                 local bottom = wtvp(camera, origin.Position - height)
                                 local top = wtvp(camera, origin.Position + height)
                                 local newHeight = -math.abs(top.Y - bottom.Y)
 
-                                local newSize = Vector2.new(newHeight / 1.5, newHeight)
+                                local newSize = vector2New(newHeight / 1.5, newHeight)
                     
                                 if onScreen and humanoid.Health > 0 then 
                                     box.Size = newSize
-                                    box.Position = Vector2.new(headPos.X - newSize.X / 2, headPos.Y - newSize.Y / 1.2)
+                                    box.Position = vector2New(headPos.X - newSize.X / 2, headPos.Y - newSize.Y / 1.2)
 
                                     boxOutline.Size = box.Size 
                                     boxOutline.Position = box.Position
@@ -1672,7 +1710,7 @@ elseif game.PlaceId == supportedGames["MVSD"]["Default Server"] or game.PlaceId 
 
                                     textEsp.Text = "[" .. player.Name .. "]" .. "[" .. distanceFromHeadPos .. "] \n [" .. health .. "/" .. maxHealth .. "]"
                                     textEsp.Color = Color3.fromRGB(255, 255, 255)
-                                    textEsp.Position = Vector2.new(headPos.X, headPos.Y)
+                                    textEsp.Position = vector2New(headPos.X, headPos.Y)
                                     textEsp.Visible = (isFFA or localPlayer.Team ~= player.Team) and onScreen
 
                                 else 
@@ -1726,13 +1764,13 @@ elseif game.PlaceId == supportedGames["MVSD"]["Default Server"] or game.PlaceId 
                             if head and humanoid then 
                                 local headPos, onScreen = wtvp(camera, head.Position)
                                 local origin, size = character:GetBoundingBox()
-                                local height = (camera.CFrame - camera.CFrame.Position) * Vector3.new(0, math.clamp(size.Y, 1, 10) / 2, 0)
+                                local height = (camera.CFrame - camera.CFrame.Position) * vector3New(0, math.clamp(size.Y, 1, 10) / 2, 0)
 
                                 local bottom = wtvp(camera, origin.Position - height)
                                 local top = wtvp(camera, origin.Position + height)
                                 local newHeight = -math.abs(top.Y - bottom.Y)
 
-                                local newSize = Vector2.new(newHeight / 1.5, newHeight)           
+                                local newSize = vector2New(newHeight / 1.5, newHeight)           
                                 local healthBarWidth = 10
                                 local healthBarHeight = newSize.Y * (humanoid.Health / humanoid.MaxHealth)
 
@@ -1741,13 +1779,13 @@ elseif game.PlaceId == supportedGames["MVSD"]["Default Server"] or game.PlaceId 
                                 local healthBarFraction = humanoid.Health / humanoid.MaxHealth
 
                                 if onScreen and humanoid.Health > 0 then 
-                                    healthBarOutline.From = Vector2.new(healthBarX, healthBarY)
-                                    healthBarOutline.To = Vector2.new(healthBarX, healthBarY + newSize.Y)
+                                    healthBarOutline.From = vector2New(healthBarX, healthBarY)
+                                    healthBarOutline.To = vector2New(healthBarX, healthBarY + newSize.Y)
                                     healthBarOutline.Visible = (isFFA or localPlayer.Team ~= player.Team) and onScreen
                                     healthBarOutline.ZIndex = 1 
 
-                                    healthBar.From = Vector2.new(healthBarX, healthBarY)
-                                    healthBar.To = Vector2.new(healthBarX, healthBarY + healthBarHeight)
+                                    healthBar.From = vector2New(healthBarX, healthBarY)
+                                    healthBar.To = vector2New(healthBarX, healthBarY + healthBarHeight)
                                     healthBar.Color = Color3.new(1, 0, 0):Lerp(Color3.new(0, 1, 0), healthBarFraction)
                                     healthBar.Visible = (isFFA or localPlayer.Team ~= player.Team) and onScreen and healthBarOutline.Visible
                                     healthBar.ZIndex = 2 
@@ -1828,13 +1866,12 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
     local eyesDecalTexture, mouthDecalTexture, irisDecalTexture, 
     eyesColor, irisColor, mouthColor, headlessHeadEv, boatSpeed,
     killAuraPlayersEv, forceLoadEnemiesEv, antiWhirlpoolEv, forceLoadBossesEv, 
-    chestAddedEv, chestEspEv, boatEspEv, chestRemovedEv, seeHiddenChatEv, 
-    boatEspRange, playerEspRange, boatEspCache, sharkEspCache, sharkAddedEv, 
-    sharkRemovedEv, sharkEspEv, disableMobDamage, disableMobAI, damageMultiplier, 
+    chestAddedEv, chestEspEv, boatEspEv, chestRemovedEv, seeHiddenChatEv, boatEspRange, 
+    playerEspRange, sharkAddedEv, sharkRemovedEv, sharkEspEv, disableMobDamage, disableMobAI, damageMultiplier, 
     noMagicAttackCdEv, autoEat, staminaCharacterAddedEv, chestEspCache, weaponChoice, 
     playerList, bossFarmChoice, jesusPart, walkOnWaterEv, bypassDialogueRep, loadIslandFunc,
     forceLoadIslandsEv, forceLoadIslands, loadEnemyFunc, updateHungerEv, autoEatEv, noMagicAttackCdEv,
-    killAuraMobsEv
+    killAuraMobsEv, boatAddedEv, boatRemovedEv, updateBoatEsp
 
     local function getLoadIslandFunc() 
         for i, v in next, connections(remotesFolder.Misc.OnTeleport.OnClientEvent) do 
@@ -2121,10 +2158,10 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
                             jesusPart = Instance.new("Part", workspace.Map);
                         end
                         jesusPart.Name = "Jesus"
-                        jesusPart.Size = Vector3.new(2048, 0, 2048)
+                        jesusPart.Size = vector3New(2048, 0, 2048)
                         jesusPart.Anchored = true 
                         jesusPart.Transparency = 0.999999
-                        jesusPart.Position = Vector3.new(leftFoot.Position.X, ocean.Position.Y, leftFoot.Position.Z)
+                        jesusPart.Position = vector3New(leftFoot.Position.X, ocean.Position.Y, leftFoot.Position.Z)
                     end
                 end)
             else 
@@ -2215,97 +2252,97 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
                         local secondMagic = data.Magic2
 
                         if (input.KeyCode == Enum.KeyCode.Q) and (string.match(string.sub(firstMagic.Value, 3), "Magic")) and (character:FindFirstChild(string.sub(firstMagic.Value, 3))) then 
-                            useSpellRemote:FireServer(1, 1, Vector3.new(0, 0, 0))
+                            useSpellRemote:FireServer(1, 1, vector3New(0, 0, 0))
                             endMagicRemote:FireServer(character, string.sub(firstMagic.Value, 3))
                             endGPRemote:FireServer()
                         end
 
                         if (input.KeyCode == Enum.KeyCode.Q) and (string.match(string.sub(secondMagic.Value, 3), "Magic")) and (character:FindFirstChild(string.sub(secondMagic.Value, 3))) then 
-                            useSpellRemote:FireServer(2, 1, Vector3.new(0, 0, 0))
+                            useSpellRemote:FireServer(2, 1, vector3New(0, 0, 0))
                             endMagicRemote:FireServer(character, string.sub(secondMagic.Value, 3))
                             endGPRemote:FireServer()
                         end
                         
                         if (input.KeyCode == Enum.KeyCode.E) and (string.match(string.sub(firstMagic.Value, 3), "Magic")) and (character:FindFirstChild(string.sub(firstMagic.Value, 3))) then 
-                            useSpellRemote:FireServer(1, 2, Vector3.new(0, 0, 0))
+                            useSpellRemote:FireServer(1, 2, vector3New(0, 0, 0))
                             endMagicRemote:FireServer(character, string.sub(firstMagic.Value, 3))
                             endGPRemote:FireServer()
                         end
 
                         if (input.KeyCode == Enum.KeyCode.E) and string.match(string.sub(secondMagic.Value, 3), "Magic") and character:FindFirstChild(string.sub(secondMagic.Value, 3)) then 
-                            useSpellRemote:FireServer(2, 2, Vector3.new(0, 0, 0))
+                            useSpellRemote:FireServer(2, 2, vector3New(0, 0, 0))
                             endMagicRemote:FireServer(character, string.sub(secondMagic.Value, 3))
                             endGPRemote:FireServer()
                         end
                         
                         if (input.KeyCode == Enum.KeyCode.R) and (string.match(string.sub(firstMagic.Value, 3), "Magic")) and (character:FindFirstChild(string.sub(firstMagic.Value, 3))) then 
-                            useSpellRemote:FireServer(1, 3, Vector3.new(0, 0, 0))
+                            useSpellRemote:FireServer(1, 3, vector3New(0, 0, 0))
                             endMagicRemote:FireServer(character, string.sub(firstMagic.Value, 3))
                             endGPRemote:FireServer()
                         end
 
                         if (input.KeyCode == Enum.KeyCode.R) and (string.match(string.sub(secondMagic.Value, 3), "Magic")) and (character:FindFirstChild(string.sub(secondMagic.Value, 3))) then 
-                            useSpellRemote:FireServer(2, 3, Vector3.new(0, 0, 0))
+                            useSpellRemote:FireServer(2, 3, vector3New(0, 0, 0))
                             endMagicRemote:FireServer(character, string.sub(secondMagic.Value, 3))
                             endGPRemote:FireServer()
                         end
                         
                         if (input.KeyCode == Enum.KeyCode.F) and (string.match(string.sub(firstMagic.Value, 3), "Magic")) and (character:FindFirstChild(string.sub(firstMagic.Value, 3))) then 
-                            useSpellRemote:FireServer(1, 4, Vector3.new(0, 0, 0))
+                            useSpellRemote:FireServer(1, 4, vector3New(0, 0, 0))
                             endMagicRemote:FireServer(character, string.sub(firstMagic.Value, 3))
                             endGPRemote:FireServer()
                         end
 
                         if (input.KeyCode == Enum.KeyCode.F) and (string.match(string.sub(secondMagic.Value, 3), "Magic")) and (character:FindFirstChild(string.sub(secondMagic.Value, 3))) then 
-                            useSpellRemote:FireServer(2, 4, Vector3.new(0, 0, 0))
+                            useSpellRemote:FireServer(2, 4, vector3New(0, 0, 0))
                             endMagicRemote:FireServer(character, string.sub(secondMagic.Value, 3))
                             endGPRemote:FireServer()
                         end
                         
                         if (input.KeyCode == Enum.KeyCode.V) and (string.match(string.sub(firstMagic.Value, 3), "Magic")) and (character:FindFirstChild(string.sub(firstMagic.Value, 3))) then 
-                            useSpellRemote:FireServer(1, 5, Vector3.new(0, 0, 0))
+                            useSpellRemote:FireServer(1, 5, vector3New(0, 0, 0))
                             endMagicRemote:FireServer(character, string.sub(firstMagic.Value, 3))
                             endGPRemote:FireServer()
                         end
 
                         if (input.KeyCode == Enum.KeyCode.V) and (string.match(string.sub(secondMagic.Value, 3), "Magic")) and (character:FindFirstChild(string.sub(secondMagic.Value, 3))) then 
-                            useSpellRemote:FireServer(2, 5, Vector3.new(0, 0, 0))
+                            useSpellRemote:FireServer(2, 5, vector3New(0, 0, 0))
                             endMagicRemote:FireServer(character, string.sub(secondMagic.Value, 3))
                             endGPRemote:FireServer()
                         end
                         
                         if (input.KeyCode == Enum.KeyCode.C) and (string.match(string.sub(firstMagic.Value, 3), "Magic")) and (character:FindFirstChild(string.sub(firstMagic.Value, 3))) then 
-                            useSpellRemote:FireServer(1, 6, Vector3.new(0, 0, 0))
+                            useSpellRemote:FireServer(1, 6, vector3New(0, 0, 0))
                             endMagicRemote:FireServer(character, string.sub(firstMagic.Value, 3))
                             endGPRemote:FireServer()
                         end;
 
                         if (input.KeyCode == Enum.KeyCode.C) and (string.match(string.sub(secondMagic.Value, 3), "Magic")) and (character:FindFirstChild(string.sub(secondMagic.Value, 3))) then 
-                            useSpellRemote:FireServer(2, 6, Vector3.new(0, 0, 0))
+                            useSpellRemote:FireServer(2, 6, vector3New(0, 0, 0))
                             endMagicRemote:FireServer(character, string.sub(secondMagic.Value, 3))
                             endGPRemote:FireServer()
                         end
                         
                         if (input.KeyCode == Enum.KeyCode.X) and (string.match(string.sub(firstMagic.Value, 3), "Magic")) and (character:FindFirstChild(string.sub(firstMagic.Value, 3))) then 
-                            useSpellRemote:FireServer(1, 7, Vector3.new(0, 0, 0))
+                            useSpellRemote:FireServer(1, 7, vector3New(0, 0, 0))
                             endMagicRemote:FireServer(character, string.sub(firstMagic.Value, 3))
                             endGPRemote:FireServer()
                         end
 
                         if (input.KeyCode == Enum.KeyCode.X) and (string.match(string.sub(secondMagic.Value, 3), "Magic")) and (character:FindFirstChild(string.sub(secondMagic.Value, 3))) then 
-                            useSpellRemote:FireServer(2, 7, Vector3.new(0, 0, 0))
+                            useSpellRemote:FireServer(2, 7, vector3New(0, 0, 0))
                             endMagicRemote:FireServer(character, string.sub(secondMagic.Value, 3))
                             endGPRemote:FireServer()
                         end
                         
                         if (input.KeyCode == Enum.KeyCode.Z) and (string.match(string.sub(firstMagic.Value, 3), "Magic")) and (character:FindFirstChild(string.sub(firstMagic.Value, 3))) then 
-                            useSpellRemote:FireServer(1, 8, Vector3.new(0, 0, 0))
+                            useSpellRemote:FireServer(1, 8, vector3New(0, 0, 0))
                             endMagicRemote:FireServer(character, string.sub(firstMagic.Value, 3))
                             endGPRemote:FireServer()
                         end
 
                         if (input.KeyCode == Enum.KeyCode.Z) and (string.match(string.sub(secondMagic.Value, 3), "Magic")) and (character:FindFirstChild(string.sub(secondMagic.Value, 3))) then 
-                            useSpellRemote:FireServer(2, 8, Vector3.new(0, 0, 0))
+                            useSpellRemote:FireServer(2, 8, vector3New(0, 0, 0))
                             endMagicRemote:FireServer(character, string.sub(secondMagic.Value, 3))
                             endGPRemote:FireServer()
                         end;
@@ -2332,7 +2369,7 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
                                 dealWeaponDamageRemote:FireServer(0, character, v, character:FindFirstChildWhichIsA("Tool"), "Slash")
                             
                                 if localPlayer.Character:FindFirstChild("Boxing") or localPlayer.Character:FindFirstChild("Canon Fist") or localPlayer.Character:FindFirstChild("Iron Leg") or localPlayer.Character:FindFirstChild("Sailor Fist") or localPlayer.Character:FindFirstChild("Thermo Fist") or localPlayer.Character:FindFirstChild("Basic Combat") then 
-                                    useMeleeRemote:FireServer(character:FindFirstChildWhichIsA("Tool"), nil, Vector3.new(0, 0, 0))
+                                    useMeleeRemote:FireServer(character:FindFirstChildWhichIsA("Tool"), nil, vector3New(0, 0, 0))
                                     dealStrengthDamageRemote:FireServer(0, character, v, character:FindFirstChildWhichIsA("Tool"), "Attack")
                                 end
                             end
@@ -2359,7 +2396,7 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
                             if localPlayer:DistanceFromCharacter(enemyRootPart.Position) <= 150 then
                                 dealWeaponDamageRemote:FireServer(0, character, v, character:FindFirstChildWhichIsA("Tool"), "Slash");
                                 if localPlayer.Character:FindFirstChild("Boxing") or localPlayer.Character:FindFirstChild("Canon Fist") or localPlayer.Character:FindFirstChild("Iron Leg") or localPlayer.Character:FindFirstChild("Sailor Fist") or localPlayer.Character:FindFirstChild("Thermo Fist") or localPlayer.Character:FindFirstChild("Basic Combat") then 
-                                    useMeleeRemote:FireServer(character:FindFirstChildWhichIsA("Tool"), nil, Vector3.new(0, 0, 0))
+                                    useMeleeRemote:FireServer(character:FindFirstChildWhichIsA("Tool"), nil, vector3New(0, 0, 0))
                                     dealStrengthDamageRemote:FireServer(0, character, v, character:FindFirstChildWhichIsA("Tool"), "Attack")
                                 end
                             end
@@ -2374,7 +2411,6 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
     })
 
     local PlayerESPRange = EspSection:AddSlider({ Name = "Player ESP Range", Flag = "Player ESP Range Slider", Value = 1000, Min = 1000, Max = 25000, Callback = function(v) playerEspRange = v end })
-    
     local BoxESP = EspSection:CreateToggle({ Name = "Box ESP", CurrentValue = false, Flag = "Box ESP [Weaponry]", 
         Callback = function(v)
             if v then 
@@ -2403,17 +2439,17 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
                             if head and humanoid then 
                                 local headPos, onScreen = wtvp(camera, head.Position)
                                 local origin, size = character:GetBoundingBox()
-                                local height = (camera.CFrame - camera.CFrame.Position) * Vector3.new(0, math.clamp(size.Y, 1, 10) / 2, 0)
+                                local height = (camera.CFrame - camera.CFrame.Position) * vector3New(0, math.clamp(size.Y, 1, 10) / 2, 0)
 
                                 local bottom = wtvp(camera, origin.Position - height)
                                 local top = wtvp(camera, origin.Position + height)
                                 local newHeight = -math.abs(top.Y - bottom.Y)
 
-                                local newSize = Vector2.new(newHeight / 1.5, newHeight)
+                                local newSize = vector2New(newHeight / 1.5, newHeight)
                     
                                 if onScreen and humanoid.Health > 0 and localPlayer:DistanceFromCharacter(head.Position) < playerEspRange then 
                                     box.Size = newSize
-                                    box.Position = Vector2.new(headPos.X - newSize.X / 2, headPos.Y - newSize.Y / 1.2)
+                                    box.Position = vector2New(headPos.X - newSize.X / 2, headPos.Y - newSize.Y / 1.2)
 
                                     boxOutline.Size = box.Size 
                                     boxOutline.Position = box.Position
@@ -2482,7 +2518,7 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
 
                                     textEsp.Text = "[" .. player.Name .. "]" .. "[" .. distanceFromHeadPos .. "] \n [" .. health .. "/" .. maxHealth .. "]"
                                     textEsp.Color = Color3.fromRGB(255, 255, 255)
-                                    textEsp.Position = Vector2.new(headPos.X, headPos.Y)
+                                    textEsp.Position = vector2New(headPos.X, headPos.Y)
                                     textEsp.Visible = (isFFA or localPlayer.Team ~= player.Team) and onScreen
 
                                 else 
@@ -2536,13 +2572,13 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
                             if head and humanoid then 
                                 local headPos, onScreen = wtvp(camera, head.Position)
                                 local origin, size = character:GetBoundingBox()
-                                local height = (camera.CFrame - camera.CFrame.Position) * Vector3.new(0, math.clamp(size.Y, 1, 10) / 2, 0)
+                                local height = (camera.CFrame - camera.CFrame.Position) * vector3New(0, math.clamp(size.Y, 1, 10) / 2, 0)
 
                                 local bottom = wtvp(camera, origin.Position - height)
                                 local top = wtvp(camera, origin.Position + height)
                                 local newHeight = -math.abs(top.Y - bottom.Y)
 
-                                local newSize = Vector2.new(newHeight / 1.5, newHeight)           
+                                local newSize = vector2New(newHeight / 1.5, newHeight)           
                                 local healthBarWidth = 10
                                 local healthBarHeight = newSize.Y * (humanoid.Health / humanoid.MaxHealth)
 
@@ -2551,13 +2587,13 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
                                 local healthBarFraction = humanoid.Health / humanoid.MaxHealth
 
                                 if onScreen and humanoid.Health > 0 and localPlayer:DistanceFromCharacter(head.Position) < playerEspRange then 
-                                    healthBarOutline.From = Vector2.new(healthBarX, healthBarY)
-                                    healthBarOutline.To = Vector2.new(healthBarX, healthBarY + newSize.Y)
+                                    healthBarOutline.From = vector2New(healthBarX, healthBarY)
+                                    healthBarOutline.To = vector2New(healthBarX, healthBarY + newSize.Y)
                                     healthBarOutline.Visible = (isFFA or localPlayer.Team ~= player.Team) and onScreen
                                     healthBarOutline.ZIndex = 1 
 
-                                    healthBar.From = Vector2.new(healthBarX, healthBarY)
-                                    healthBar.To = Vector2.new(healthBarX, healthBarY + healthBarHeight)
+                                    healthBar.From = vector2New(healthBarX, healthBarY)
+                                    healthBar.To = vector2New(healthBarX, healthBarY + healthBarHeight)
                                     healthBar.Color = Color3.new(1, 0, 0):Lerp(Color3.new(0, 1, 0), healthBarFraction)
                                     healthBar.Visible = (isFFA or localPlayer.Team ~= player.Team) and onScreen and healthBarOutline.Visible
                                     healthBar.ZIndex = 2 
@@ -2590,7 +2626,65 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
             end 
         end 
     })
+    local BoatEspRange = EspSection:AddSlider({ Name = "Boat ESP Range", Flag = "Boat ESP Range Slider", Value = 1000, Min = 1000, Max = 25000, Callback = function(v) boatEspRange = v end })
+    local BoatEsp = EspSection:CreateToggle({ Name = "Boat ESP", CurrentValue = false, Flag = "Boat ESP", 
+        Callback = function(v)
+            if v then 
+                for i, v in next, boatsFolder:GetChildren() do 
+                    if v.Name ~= localPlayer.Name .. "Boat" then
+                        addPlayerToDrawingCache("Boat Text", v) -- Not Player But Name of Function Innit
+                    end
+                end
 
+                boatAddedEv = boatsFolder.ChildAdded:Connect(function(child) if child.Name ~= localPlayer.Name .. "Boat" then addPlayerToDrawingCache("Boat Text", child) --[[Not Player But Name of Function Innit]] end end)
+                boatRemovedEv = boatsFolder.ChildRemoved:Connect(function(child) removePlayerDrawingCache("Boat Text", child) --[[Not Player But Name of Function Innit]]  end)
+                print(boatEspCache)
+                updateBoatEsp = renderStepped:Connect(function()
+                    for boat, cachedDrawings in next, boatEspCache do 
+                        local textEsp = cachedDrawings.textEsp
+                        
+                        if boat:FindFirstChild("Center") then 
+                            local centerOfBoat = boat.Center
+
+                            if centerOfBoat:FindFirstChild("BoatOverhead") then 
+                                local boatOverhead = centerOfBoat.BoatOverhead
+                                local boatHP = boatOverhead.Amount
+
+                                local boatTitle = boatOverhead.Title
+                                local boatPos, onScreen = wtvp(camera, centerOfBoat.Position)
+
+                                local distanceFromBoatPos = round(localPlayer:DistanceFromCharacter(centerOfBoat.Position))
+
+                                if boatTitle.Text ~= "" then 
+                                    textEsp.Text = "[" .. boat.Name .. "]" .. "[" .. distanceFromBoatPos .. "] \n [" .. boatHP.Text .. "] \n [Title: " .. boatTitle.Text .. "]"
+                                else 
+                                    textEsp.Text = "[" .. boat.Name .. "]" .. "[" .. distanceFromBoatPos .. "] \n [" .. boatHP.Text .. "] \n [Title: " .. "none" .. "]"
+                                end;
+
+                                if onScreen and distanceFromBoatPos < boatEspRange then 
+                                    textEsp.Visible = true
+                                    textEsp.Position = vector2New(boatPos.X, boatPos.Y)
+                                else 
+                                    textEsp.Visible = false
+                                end
+                            else 
+                                textEsp.Visible = false
+                            end
+                        end
+                    end 
+                end)
+
+            else 
+                if boatAddedEv then boatAddedEv:Disconnect(); boatAddedEv = nil end 
+                if boatRemovedEv then boatRemovedEv:Disconnect(); boatRemovedEv = nil end 
+                if updateBoatEsp then updateBoatEsp:Disconnect(); updateBoatEsp = nil end 
+
+                for i, v in next, boatsFolder:GetChildren() do 
+                    removePlayerDrawingCache("Boat Text", v)
+                end 
+            end 
+        end 
+    })
     -- Essential Hooks Disable Mob Damage/AI, Damage Multiplier 
     local oldNamecall; oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
         local args = { ... }

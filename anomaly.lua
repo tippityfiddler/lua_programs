@@ -1000,12 +1000,11 @@ elseif game.PlaceId == supportedGames["War Tycoon"] then
             else 
                 if hitboxExpanderTorsoEv then hitboxExpanderTorsoEv:Disconnect(); hitboxExpanderTorsoEv = nil end 
                 for i, v in next, Players:GetPlayers() do 
-                    if localPlayer.Character then 
-                        local character = localPlayer.Character
+                    if v.Character then 
+                        local character = v.Character
                         if character:FindFirstChild("HumanoidRootPart") then 
                             local root = character.HumanoidRootPart 
-                            root.Size = Vector3.new(2, 2, 1) 
-                            repeat taskWait() root.Transparency = 1 until root.Transparency == 1
+                            repeat taskWait() root.Transparency = 1; root.Size = Vector3.new(2, 2, 1)  until root.Transparency == 1
                         end 
                     end 
                 end 
@@ -1027,7 +1026,7 @@ elseif game.PlaceId == supportedGames["War Tycoon"] then
                 
                     if character:FindFirstChildWhichIsA("Tool") then 
                         local tool = character:FindFirstChildWhichIsA("Tool")
-                        local toolName = Tool.Name 
+                        local toolName = tool.Name 
                         
                         if tool:FindFirstChild("Settings", true) and require(tool:FindFirstChild("Settings", true)).Ammo ~= math.huge then 
                             if not table.find(usedGuns, toolName) and not hasGunBeenShot then 

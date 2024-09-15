@@ -1,4 +1,12 @@
 repeat task.wait() until game:IsLoaded()
+getgenv().AnomalyLoaded = true 
+if AnomalyLoaded then 
+    getgenv().hooks = {
+        disableMobDamage = nil,
+        disableMobAI = nil, 
+        damageMultiplier = nil 
+    } 
+end 
 -- Services:
 -- Self Note: Do Not Copy and Paste Health Bar ESP, Box ESP or Text ESP from MVSD portion of code 
 local Players = game:GetService("Players")
@@ -92,7 +100,6 @@ local oldNamecall; oldNamecall = hookmetamethod(game, "__namecall", function(...
     if callMethod() == "Kick" or callMethod():lower() == "kick" then return end
     return oldNamecall(...)
 end)
-
 hookfunction(localPlayer.Kick, function() return end)
 
 local function universalHitboxExpander() 
@@ -313,11 +320,9 @@ end
 
 local function createDrawing(name, properties)
     local drawing = Drawing.new(name)
-
     for i, v in next, properties do 
         drawing[i] = v 
     end
-
     return drawing
 end
 
@@ -394,7 +399,7 @@ local function addPlayerToDrawingCache(name, player) -- name refers to the drawi
     elseif name == "Chest Text" then 
         chestEspCache[player] = {
             textEsp = createDrawing("Text", { 
-                Color = Color3.fromRGB(255, 0, 0),
+                Color = Color3.fromRGB(0, 255, 0),
                 Text = "", 
                 Visible = false,
                 Center = true, 
@@ -429,6 +434,11 @@ local function removePlayerDrawingCache(name, player)
         if boatEspCache[player] then
             boatEspCache[player].textEsp:Remove()
             boatEspCache[player] = nil
+        end 
+    elseif name == "Chest Text" then 
+        if chestEspCache[player] then
+            chestEspCache[player].textEsp:Remove()
+            chestEspCache[player] = nil
         end 
     end 
 end 
@@ -1863,16 +1873,64 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
     local hungerFunc = connections(updateHunger.OnClientEvent)[1].Function
     local currentHunger = getupvalue(hungerFunc, 1)
 
-    local eyesDecalTexture, mouthDecalTexture, irisDecalTexture, 
-    eyesColor, irisColor, mouthColor, headlessHeadEv, boatSpeed,
-    killAuraPlayersEv, forceLoadEnemiesEv, antiWhirlpoolEv, forceLoadBossesEv, 
-    chestAddedEv, chestEspEv, boatEspEv, chestRemovedEv, seeHiddenChatEv, boatEspRange, 
-    playerEspRange, sharkAddedEv, sharkRemovedEv, sharkEspEv, disableMobDamage, disableMobAI, damageMultiplier, 
-    noMagicAttackCdEv, autoEat, staminaCharacterAddedEv, chestEspCache, weaponChoice, 
-    playerList, bossFarmChoice, jesusPart, walkOnWaterEv, bypassDialogueRep, loadIslandFunc,
-    forceLoadIslandsEv, forceLoadIslands, loadEnemyFunc, updateHungerEv, autoEatEv, noMagicAttackCdEv,
-    killAuraMobsEv, boatAddedEv, boatRemovedEv, updateBoatEsp
+    getgenv().hooks = {
+        disableMobDamage = nil,
+        disableMobAI = nil, 
+        damageMultiplier = nil 
+    }
 
+    getgenv().uiEssentials = {
+        ChestEsp = nil
+    }
+
+    getgenv().gameEssentialVariables = {
+        
+        eyesDecalTexture = nil, 
+        mouthDecalTexture = nil, 
+        irisDecalTexture = nil, 
+        eyesColor = nil, 
+        irisColor = nil, 
+        mouthColor = nil, 
+        headlessHeadEv = nil, 
+        boatSpeed = nil,
+        killAuraPlayersEv = nil, 
+        forceLoadEnemiesEv = nil, 
+        antiWhirlpoolEv = nil, 
+        forceLoadBossesEv = nil, 
+        chestAddedEv = nil, 
+        chestEspEv = nil, 
+        boatEspEv = nil, 
+        chestRemovedEv = nil, 
+        seeHiddenChatEv = nil, 
+        boatEspRange = nil, 
+        playerEspRange = nil, 
+        sharkAddedEv = nil, 
+        sharkRemovedEv = nil, 
+        sharkEspEv = nil, 
+        disableMobDamage = nil, 
+        disableMobAI = nil, 
+        damageMultiplier = nil, 
+        noMagicAttackCdEv = nil, 
+        autoEat = nil, 
+        staminaCharacterAddedEv = nil, 
+        weaponChoice = nil, 
+        playerList = nil, 
+        bossFarmChoice = nil, 
+        jesusPart = nil, 
+        walkOnWaterEv = nil, 
+        bypassDialogueRep = nil, 
+        loadIslandFunc = nil,
+        forceLoadIslandsEv = nil, 
+        forceLoadIslands = nil, 
+        loadEnemyFunc = nil, 
+        updateHungerEv = nil, 
+        autoEatEv = nil, 
+        killAuraMobsEv = nil, 
+        boatAddedEv = nil, 
+        boatRemovedEv = nil, 
+        updateBoatEsp = nil, 
+        chestEspRange = nil,
+    }
     local function getLoadIslandFunc() 
         for i, v in next, connections(remotesFolder.Misc.OnTeleport.OnClientEvent) do 
             if tostring(fenv(v.Function).script) == "Unloading" then
@@ -2071,8 +2129,8 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
                         end
                     end
                 end
-
-                headlessHeadEv = localPlayer.CharacterAdded:Connect(function(character)
+                
+                gameEssentialVariables.headlessHeadEv = localPlayer.CharacterAdded:Connect(function(character)
                     repeat taskWait() until character:FindFirstChild("Head")
                     local head = character.Head
                     head.Transparency = 1
@@ -2085,7 +2143,7 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
                 end)
 
             else 
-                if headlessHeadEv then headlessHeadEv:Disconnect(); headlessHeadEv = nil end 
+                if gameEssentialVariables.headlessHeadEv then gameEssentialVariables.headlessHeadEv:Disconnect(); gameEssentialVariables.headlessHeadEv = nil end 
                 localPlayer.Character.Head.Transparency = 0
                 local eyes = Instance.new("Decal", localPlayer.Character.Head)
                 local mouth = Instance.new("Decal", localPlayer.Character.Head)
@@ -2117,11 +2175,11 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
             local customChat = localPlayer.PlayerGui.CustomChat
             customChat.Frame.Visible = not customChat.Frame.Visible
             if v then 
-                seeHiddenChatEv = customChat.Frame:GetPropertyChangedSignal("Visible"):Connect(function()
+                gameEssentialVariables.seeHiddenChatEv = customChat.Frame:GetPropertyChangedSignal("Visible"):Connect(function()
                     customChat.Frame.Visible = false
                 end)
             else 
-                if seeHiddenChatEv then seeHiddenChatEv:Disconnect(); seeHiddenChatEv = nil end 
+                if gameEssentialVariables.seeHiddenChatEv then gameEssentialVariables.seeHiddenChatEv:Disconnect(); gameEssentialVariables.seeHiddenChatEv = nil end 
             end
             customChat.Frame.Visible = not customChat.Frame.Visible
             chatFrame.ChatChannelParentFrame.Visible = not chatFrame.ChatChannelParentFrame.Visible
@@ -2132,7 +2190,7 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
         Callback = function(v)
             if v then 
                 local loadEnemyFunc = getLoadEnemiesFunc()
-                forceLoadEnemiesEv = renderStepped:Connect(function()
+                gameEssentialVariables.forceLoadEnemiesEv = renderStepped:Connect(function()
                     for i, v in next, ReplicatedStorage.RS.UnloadEnemies:GetChildren() do 
                         pcall(function()
                             if loadEnemyFunc then 
@@ -2142,30 +2200,30 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
                     end
                 end)
             else 
-                if forceLoadEnemiesEv then forceLoadEnemiesEv:Disconnect(); forceLoadEnemiesEv = nil end 
+                if gameEssentialVariables.forceLoadEnemiesEv then gameEssentialVariables.forceLoadEnemiesEv:Disconnect(); gameEssentialVariables.forceLoadEnemiesEv = nil end 
             end
         end
     })
     local WalkOnWater = GeneralSection:AddToggle({ Name = "Walk On Water", Flag = "Walk On Water", 
         Callback = function(v)
             if v then 
-                walkOnWaterEv = RunService.Heartbeat:Connect(function()
+                gameEssentialVariables.walkOnWaterEv = RunService.Heartbeat:Connect(function()
                     if localPlayer.Character and localPlayer.character:FindFirstChild("LeftFoot") then 
                         local ocean = camera.Sea.Sea.Ocean1
                         local leftFoot = localPlayer.Character.LeftFoot
                         
                         if not workspace.Map:FindFirstChild("Jesus") then 
-                            jesusPart = Instance.new("Part", workspace.Map);
+                            gameEssentialVariables.jesusPart = Instance.new("Part", workspace.Map);
                         end
-                        jesusPart.Name = "Jesus"
-                        jesusPart.Size = vector3New(2048, 0, 2048)
-                        jesusPart.Anchored = true 
-                        jesusPart.Transparency = 0.999999
-                        jesusPart.Position = vector3New(leftFoot.Position.X, ocean.Position.Y, leftFoot.Position.Z)
+                        gameEssentialVariables.jesusPart.Name = "Jesus"
+                        gameEssentialVariables.jesusPart.Size = vector3New(2048, 0, 2048)
+                        gameEssentialVariables.jesusPart.Anchored = true 
+                        gameEssentialVariables.jesusPart.Transparency = 0.999999
+                        gameEssentialVariables.jesusPart.Position = vector3New(leftFoot.Position.X, ocean.Position.Y, leftFoot.Position.Z)
                     end
                 end)
             else 
-                if walkOnWaterEv then walkOnWaterEv:Disconnect(); walkOnWaterEv = nil end 
+                if gameEssentialVariables.walkOnWaterEv then gameEssentialVariables.walkOnWaterEv:Disconnect(); gameEssentialVariables.walkOnWaterEv = nil end 
                 workspace.Map.Jesus:Destroy()
             end 
         end
@@ -2174,36 +2232,36 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
         Callback = function(v)
             if v then 
                 staminaRemote:FireServer(-5000, "Dodge")
-                staminaCharacterAddedEv = localPlayer.CharacterAdded:Connect(function()
+                gameEssentialVariables.staminaCharacterAddedEv = localPlayer.CharacterAdded:Connect(function()
                     repeat task.wait() until localPlayer.PlayerGui:FindFirstChild("MainGui")
                     staminaRemote:FireServer(-5000, "Dodge")
                 end)
             else 
-                if staminaCharacterAddedEv then staminaCharacterAddedEv:Disconnect(); staminaCharacterAddedEv = nil end 
+                if gameEssentialVariables.staminaCharacterAddedEv then gameEssentialVariables.staminaCharacterAddedEv:Disconnect(); gameEssentialVariables.staminaCharacterAddedEv = nil end 
             end  
         end
     })
     local AntiWhirlpool = GeneralSection:AddToggle({ Name = "Anti Whirlpool", Flag = "Anti Whirlpool",
         Callback = function(v)
             if v then 
-                antiWhirlpoolEv = RunService.RenderStepped:Connect(function()
+                gameEssentialVariables.antiWhirlpoolEv = RunService.RenderStepped:Connect(function()
                     if localPlayer.Character and localPlayer.Character:FindFirstChild("Whirlpool") then 
                         localPlayer.Character.Whirlpool:Destroy()
                     end
                 end)
                 
             else 
-                if antiWhirlpoolEv then antiWhirlpoolEv:Disconnect(); antiWhirlpoolEv = nil end 
+                if gameEssentialVariables.antiWhirlpoolEv then gameEssentialVariables.antiWhirlpoolEv:Disconnect(); gameEssentialVariables.antiWhirlpoolEv = nil end 
             end
         end
     })
     local AutoEat = GeneralSection:AddToggle({ Name = "Auto Eat", Flag = "Auto Eat",
         Callback = function(v)
             if v then 
-                updateHungerEv = updateHunger.OnClientEvent:Connect(function(hungerValue) 
+                gameEssentialVariables.updateHungerEv = updateHunger.OnClientEvent:Connect(function(hungerValue) 
                     currentHunger = hungerValue
                 end)
-                autoEatEv = renderStepped:Connect(function()
+                gameEssentialVariables.autoEatEv = renderStepped:Connect(function()
                     if currentHunger <= 45 then 
                         local foodItem = localPlayer.PlayerGui.Backpack:FindFirstChild("HungerIcon", true)
                         if not foodItem then return end
@@ -2211,7 +2269,7 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
                     end 
                 end)
             else 
-                if autoEatEv then autoEatEv:Disconnect(); autoEatEv = nil end 
+                if gameEssentialVariables.autoEatEv then gameEssentialVariables.autoEatEv:Disconnect(); gameEssentialVariables.autoEatEv = nil end 
             end
         end
     })
@@ -2219,7 +2277,7 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
         Callback = function(v)
             if v then 
                 blockBossAntiLoadFunc()
-                forceLoadBossesEv = renderStepped:Connect(function()
+                gameEssentialVariables.forceLoadBossesEv = renderStepped:Connect(function()
                     for i, v in next, ReplicatedStorage.RS.Story.Enemies:GetChildren() do 
                         if v:FindFirstChild("AppearAt") and not workspace.Enemies:FindFirstChild(v.Name) then 
                             v.AppearAt.Value = 0
@@ -2235,14 +2293,14 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
                     end
                 end)
             else 
-                if forceLoadBossesEv then forceLoadBossesEv:Disconnect(); forceLoadBossesEv = nil end 
-            end;
-        end; 
+                if gameEssentialVariables.forceLoadBossesEv then gameEssentialVariables.forceLoadBossesEv:Disconnect(); gameEssentialVariables.forceLoadBossesEv = nil end 
+            end
+        end
     })
     local NoMagicAttackCooldown = GeneralSection:AddToggle({  Name = "No Magic Attack Cooldown", Flag = "No Magic Attack Cooldown",
         Callback = function(v)
             if v then     
-                noMagicAttackCdEv = inputBegan:Connect(function(input, gpe)
+                gameEssentialVariables.noMagicAttackCdEv = inputBegan:Connect(function(input, gpe)
                     if gpe then return end
 
                     if localPlayer.Character then
@@ -2350,7 +2408,7 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
                 end)
                     
             else 
-                if noMagicAttackCdEv then noMagicAttackCdEv:Disconnect(); noMagicAttackCdEv = nil end 
+                if gameEssentialVariables.noMagicAttackCdEv then gameEssentialVariables.noMagicAttackCdEv:Disconnect(); gameEssentialVariables.noMagicAttackCdEv = nil end 
             end
         end
     })
@@ -2359,7 +2417,7 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
         Flag = "Kill Aura [MOBS]",
         Callback = function(v)
             if v then 
-                killAuraMobsEv = renderStepped:Connect(function()
+                gameEssentialVariables.killAuraMobsEv = renderStepped:Connect(function()
                     for i, v in next, enemiesFolder:GetChildren() do
                         if localPlayer.Character and v:IsA("Model") and v:FindFirstChild("HumanoidRootPart") then 
                             local enemyRootPart = v.HumanoidRootPart
@@ -2378,7 +2436,7 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
                 end)
 
             else 
-                if killAuraMobsEv then killAuraMobsEv:Disconnect(); killAuraMobsEv = nil end 
+                if gameEssentialVariables.killAuraMobsEv then gameEssentialVariables.killAuraMobsEv:Disconnect(); gameEssentialVariables.killAuraMobsEv = nil end 
             end
         end
     })
@@ -2387,7 +2445,7 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
         Flag = "Kill Aura [PLAYERS]",
         Callback = function(v)
             if v then
-                killAuraPlayersEv = renderStepped:Connect(function()
+                gameEssentialVariables.killAuraPlayersEv = renderStepped:Connect(function()
                     for i, v in next, workspace:GetChildren() do
                         if localPlayer.Character and v:IsA("Model") and v:FindFirstChild("HumanoidRootPart") then 
                             local enemyRootPart = v.HumanoidRootPart
@@ -2405,7 +2463,7 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
                 end)
 
             else 
-                if killAuraPlayersEv then killAuraPlayersEv:Disconnect(); killAuraPlayersEv = nil end 
+                if gameEssentialVariables.killAuraPlayersEv then gameEssentialVariables.killAuraPlayersEv:Disconnect(); gameEssentialVariables.killAuraPlayersEv = nil end 
             end
         end
     })
@@ -2420,8 +2478,8 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
                     end 
                 end 
 
-                boxPlayerAddedEv = playerAdded:Connect(function(player) addPlayerToDrawingCache("Square", player) end)
-                boxPlayerRemovingEv = playerRemoving:Connect(function(player) removePlayerDrawingCache("Square", player) end)
+                gameEssentialVariables.boxPlayerAddedEv = playerAdded:Connect(function(player) addPlayerToDrawingCache("Square", player) end)
+                gameEssentialVariables.boxPlayerRemovingEv = playerRemoving:Connect(function(player) removePlayerDrawingCache("Square", player) end)
 
                 updateBoxEsp = renderStepped:Connect(function()
                     for player, cachedDrawings in next, boxEspCache do 
@@ -2636,9 +2694,8 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
                     end
                 end
 
-                boatAddedEv = boatsFolder.ChildAdded:Connect(function(child) if child.Name ~= localPlayer.Name .. "Boat" then addPlayerToDrawingCache("Boat Text", child) --[[Not Player But Name of Function Innit]] end end)
-                boatRemovedEv = boatsFolder.ChildRemoved:Connect(function(child) removePlayerDrawingCache("Boat Text", child) --[[Not Player But Name of Function Innit]]  end)
-                print(boatEspCache)
+                gameEssentialVariables.boatAddedEv = boatsFolder.ChildAdded:Connect(function(child) if child.Name ~= localPlayer.Name .. "Boat" then addPlayerToDrawingCache("Boat Text", child) --[[Not Player But Name of Function Innit]] end end)
+                gameEssentialVariables.boatRemovedEv = boatsFolder.ChildRemoved:Connect(function(child) removePlayerDrawingCache("Boat Text", child) --[[Not Player But Name of Function Innit]]  end)
                 updateBoatEsp = renderStepped:Connect(function()
                     for boat, cachedDrawings in next, boatEspCache do 
                         local textEsp = cachedDrawings.textEsp
@@ -2646,7 +2703,7 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
                         if boat:FindFirstChild("Center") then 
                             local centerOfBoat = boat.Center
 
-                            if centerOfBoat:FindFirstChild("BoatOverhead") then 
+                            if centerOfBoat:FindFirstChild("BoatOverhead") and centerOfBoat.BoatOverhead:FindFirstChild("Amount") then 
                                 local boatOverhead = centerOfBoat.BoatOverhead
                                 local boatHP = boatOverhead.Amount
 
@@ -2675,8 +2732,8 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
                 end)
 
             else 
-                if boatAddedEv then boatAddedEv:Disconnect(); boatAddedEv = nil end 
-                if boatRemovedEv then boatRemovedEv:Disconnect(); boatRemovedEv = nil end 
+                if gameEssentialVariables.boatAddedEv then gameEssentialVariables.boatAddedEv:Disconnect(); gameEssentialVariables.boatAddedEv = nil end 
+                if gameEssentialVariables.boatRemovedEv then gameEssentialVariables.boatRemovedEv:Disconnect(); gameEssentialVariables.boatRemovedEv = nil end 
                 if updateBoatEsp then updateBoatEsp:Disconnect(); updateBoatEsp = nil end 
 
                 for i, v in next, boatsFolder:GetChildren() do 
@@ -2685,8 +2742,130 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
             end 
         end 
     })
+    local ChestEspRange = EspSection:AddSlider({ Name = "Chest ESP Range", Flag = "Chest ESP Range Slider", Value = 1000, Min = 1000, Max = 25000, Callback = function(v) chestEspRange = v end })
+    uiEssentials.ChestEsp = EspSection:CreateToggle({ Name = "Chest ESP", CurrentValue = false, Flag = "Chest ESP", 
+        Callback = function(v)
+            if v then 
+                for i, islands in next, mapFolder:GetChildren() do 
+                    chestFolderRemovedEv = islands.ChildAdded:Connect(function(child) 
+                        if child.Name == "Chests" then
+                            for i, chest in next, child:GetChildren() do 
+                                if table.find(child:GetChildren(), chest) then 
+                                    removePlayerDrawingCache("Chest Text", chest)
+                                end 
+                            end 
+                        end
+                    end)
+
+                    if islands:FindFirstChild("Chests") then 
+                        local chestFolder = islands.Chests 
+
+                        for i, chest in next, chestFolder:GetChildren() do 
+                            if not chest:FindFirstChild("Open") then 
+                                addPlayerToDrawingCache("Chest Text", chest)
+                            end 
+
+                            chestChildAddedEv = chest.ChildAdded:Connect(function(child) 
+                                if child.Name == "Open" then
+                                    removePlayerDrawingCache("Chest Text", chest) 
+                                end 
+                            end)
+                        end 
+
+                        chestAddedEv = chestFolder.ChildAdded:Connect(function(child) 
+                            if child.Name:find("Chest") then 
+                                addPlayerToDrawingCache("Chest Text", child) 
+
+                                chestChildAddedEv = child.ChildAdded:Connect(function(child)
+                                    if child.Name == "Open" then removePlayerDrawingCache("Chest Text", chest) end 
+                                end)
+                            end 
+                        end)
+
+                        chestRemovedEv = chestFolder.ChildRemoved:Connect(function(child) 
+                            if child.Name:find("Chest") or child.Name:find("Storage") then 
+                                removePlayerDrawingCache("Chest Text", child) 
+                            end 
+                        end)
+                    end 
+
+                    chestFolderAddedEv = islands.ChildAdded:Connect(function(child) 
+                        if child.Name == "Chests" then
+                            local chestFolder = child  
+
+                            for i, chest in next, chestFolder:GetChildren() do 
+                                if not chest:FindFirstChild("Open") then 
+                                    addPlayerToDrawingCache("Chest Text", chest)
+                                end 
+
+                                chestChildAddedEv = chest.ChildAdded:Connect(function(child) 
+                                    if child.Name == "Open" then
+                                        removePlayerDrawingCache("Chest Text", chest) 
+                                    end 
+                                end)
+                            end 
+
+                            chestAddedEv = chestFolder.ChildAdded:Connect(function(chestChild) 
+                                if child.Name:find("Chest") or child.Name:find("Storage") then 
+                                    addPlayerToDrawingCache("Chest Text", chestChild) 
+    
+                                    chestChildAddedEv = child.ChildAdded:Connect(function(child)
+                                        if child.Name == "Open" then removePlayerDrawingCache("Chest Text", chestChild) end 
+                                    end)
+                                end 
+                            end)
+
+                            chestRemovedEv = chestFolder.ChildRemoved:Connect(function(child) 
+                                if child.Name:find("Chest") or child.Name:find("Storage") then 
+                                    removePlayerDrawingCache("Chest Text", child) 
+                                end 
+                            end)
+                        end
+                    end)
+                end 
+
+                updateChestEsp = renderStepped:Connect(function()
+                    for chest, cachedDrawings in next, chestEspCache do 
+                        local textEsp = cachedDrawings.textEsp
+                        if chest then 
+                            if chest:FindFirstChild("Base") then 
+                                local base = chest.Base
+                                local basePos, onScreen = wtvp(camera, base.Position)
+                                local distanceFromBasePos = round(localPlayer:DistanceFromCharacter(base.Position))
+
+                                if onScreen and distanceFromBasePos < chestEspRange then 
+                                    textEsp.Text = "[" .. chest.Name .. "]" .. "[" .. distanceFromBasePos .. "]"
+                                    textEsp.Visible = true 
+                                    textEsp.Position = vector2New(basePos.X, basePos.Y)
+                                else 
+                                    textEsp.Visible = false
+                                end 
+                            else 
+                                textEsp.Visible = false 
+                            end
+                        else 
+                            textEsp.Visible = false 
+                        end 
+                    end 
+                end)
+
+            else 
+                if updateChestEsp then updateChestEsp:Disconnect(); updateChestEsp = nil end 
+                if chestAddedEv then chestAddedEv:Disconnect(); chestAddedEv = nil end 
+                if chestRemovedEv then chestRemovedEv:Disconnect(); chestRemovedEv = nil end 
+                if chestFolderAddedEv then chestFolderAddedEv:Disconnect(); chestFolderAddedEv = nil end 
+
+                for i, v in next, mapFolder:GetDescendants() do 
+                    if v.Name:find("Chest") or v.Name:find("Storage") then 
+                        removePlayerDrawingCache("Chest Text", v)
+                    end 
+                end 
+            end 
+        end 
+    })
+    --gameEssentialVariables.
     -- Essential Hooks Disable Mob Damage/AI, Damage Multiplier 
-    local oldNamecall; oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
+    local disableMobAIHook; disableMobAIHook = hookmetamethod(game, "__namecall", function(self, ...)
         local args = { ... }
         if disableMobAI then 
             if self.Name == "TargetBehavior" or self.Name == "SetTarget" then 
@@ -2694,10 +2873,10 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
             end
         end
     
-        return oldNamecall(self, unpack(args))
+        return disableMobAIHook(self, unpack(args))
     end)
 
-    local oldNamecall; oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
+    local damageMultiplierHook; damageMultiplierHook = hookmetamethod(game, "__namecall", function(self, ...)
         if damageMultiplier then
             if self.Name:find("Deal") and self.Name:find("Damage") then
                 if localPlayer.Character and ... == localPlayer.Character or select(2, ...) == localPlayer.Character then
@@ -2708,10 +2887,10 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
                 end
             end
         end
-        return oldNamecall(self, ...)
+        return damageMultiplierHook(self, ...)
     end)
 
-    local oldNamecall; oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
+    local disableMobDamageHook; disableMobDamageHook = hookmetamethod(game, "__namecall", function(self, ...)
         local args = { ... }
         
         if disableMobDamage then
@@ -2734,7 +2913,7 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
             end
         end
 
-        return oldNamecall(self, unpack(args))
+        return disableMobDamageHook(self, unpack(args))
     end)
 
 end 

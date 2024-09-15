@@ -1824,7 +1824,7 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
     local updateHunger = remotesFolder.UI.UpdateHunger
     local hungerFunc = connections(updateHunger.OnClientEvent)[1].Function
     local currentHunger = getupvalue(hungerFunc, 1)
-    
+
     local eyesDecalTexture, mouthDecalTexture, irisDecalTexture, 
     eyesColor, irisColor, mouthColor, headlessHeadEv, boatSpeed,
     killAuraPlayersEv, forceLoadEnemiesEv, antiWhirlpoolEv, forceLoadBossesEv, 
@@ -2168,7 +2168,7 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
                 end)
                 autoEatEv = renderStepped:Connect(function()
                     if currentHunger <= 45 then 
-                        local foodItem = LocalPlayer.PlayerGui.Backpack:FindFirstChild("HungerIcon", true)
+                        local foodItem = localPlayer.PlayerGui.Backpack:FindFirstChild("HungerIcon", true)
                         if not foodItem then return end
                         eatFoodRemote:FireServer(foodItem.Parent.Parent.Tool.Value)
                     end 

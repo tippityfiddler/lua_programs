@@ -1,6 +1,6 @@
 repeat task.wait() until game:IsLoaded()
-if AnomalyLoaded then return end 
-getgenv().AnomalyLoaded = true 
+--if AnomalyLoaded then return end 
+--getgenv().AnomalyLoaded = true 
 -- Services:
 -- Self Note: Do Not Copy and Paste Health Bar ESP, Box ESP or Text ESP from MVSD portion of code 
 local Players = game:GetService("Players")
@@ -436,7 +436,7 @@ local function removePlayerDrawingCache(name, player)
 end 
 
 -- UI Essential Universal Functions/Sections/Tabs/Button:
-local Library = loadstring(game:GetObjects("rbxassetid://7657867786")[1].Source)()
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/asxhes/robloxScripts/main/ui%20library.lua"))()
 local Anomaly = Library:CreateWindow({ Name = "Anomaly", Themeable = { Info = "Discord Server: VzYTJ7Y" } })
 local GeneralTab = Anomaly:CreateTab({ Name = "General" })
 local LightingSection = GeneralTab:CreateSection({ Name = "Lighting" })
@@ -2337,9 +2337,9 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
                 end)
                 gameEssentialVariables.autoEatEv = renderStepped:Connect(function()
                     if currentHunger <= 45 then 
-                        local foodItem = localPlayer.PlayerGui.Backpack:FindFirstChild("HungerIcon", true)
-                        if not foodItem then return end
-                        eatFoodRemote:FireServer(foodItem.Parent.Parent.Tool.Value)
+                        for i, v in next, localPlayer.Backpack:GetChildren() do
+                            eatFoodRemote:FireServer(v)
+                        end
                     end 
                 end)
             else 
@@ -3066,8 +3066,8 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
 
                     if not rootPart:FindFirstChild("BodyVelocity") then
                         local bodyVel = Instance.new("BodyVelocity", rootPart)
-                        bodyVel.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-                        bodyVel.Velocity = Vector3.new(0, 0, 0)
+                        bodyVel.MaxForce = vector3New(math.huge, math.huge, math.huge)
+                        bodyVel.Velocity = vector3New(0, 0, 0)
                     end
                 end 
                 if not x then 
@@ -3079,8 +3079,8 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
                             if not rootPart:FindFirstChild("BodyVelocity") then
                                 local bodyVel = Instance.new("BodyVelocity", rootPart)
                                     
-                                bodyVel.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-                                bodyVel.Velocity = Vector3.new(0, 0, 0)
+                                bodyVel.MaxForce = vector3New(math.huge, math.huge, math.huge)
+                                bodyVel.Velocity = vector3New(0, 0, 0)
                             end
                             rootPart.CFrame = nearestChest.CFrame * CFrame.new(0, -12, 0)
                             noClip()
@@ -3098,6 +3098,211 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
             end
         end
     end))
+
+    listOfFishingRods = {}
+    for i, v in pairs(localPlayer.Backpack:GetChildren()) do 
+        if string.match(v.Name, "Rod") then 
+            table.insert(listOfFishingRods, v.Name)
+        end
+    end
+    for i, v in pairs(localPlayer.Character:GetChildren()) do 
+        if string.match(v.Name, "Rod") then 
+            table.insert(listOfFishingRods, v.Name)
+        end
+    end
+    uiEssentials.ChooseFishingRodDropdown = FarmSection:AddDropdown({ Name = "Choose Fishing Rod", Flag = "Choose Fishing Rod", Value = listOfFishingRods[1], List = listOfFishingRods, UpdateList = function(newList) end, Callback = function(v) getgenv().fishingRodChoice = v end })
+    uiEssentials.RefreshFishingRodDropdown = FarmSection:AddButton({ Name = "Refresh Fishing Rod Dropdown",
+        Callback = function()
+            listOfFishingRods = {}
+            for i, v in pairs(localPlayer.Backpack:GetChildren()) do 
+                if string.match(v.Name, "Rod") then 
+                    table.insert(listOfFishingRods, v.Name)
+                end
+            end
+
+            for i, v in pairs(localPlayer.Character:GetChildren()) do 
+                if string.match(v.Name, "Rod") then 
+                    table.insert(listOfFishingRods, v.Name)
+                end
+            end
+            uiEssentials.ChooseFishingRodDropdown.UpdateList(listOfFishingRods)
+        end
+    })
+
+    uiEssentials.SilentAutoFish = FarmSection:AddToggle({ Name = "Silent Auto Fish", Flag = "Silent Auto Fish", Callback = function(v) getgenv().silentAutoFish = v end })
+    backpackList = {}
+    for i, v in pairs(localPlayer.Backpack:GetChildren()) do 
+        table.insert(backpackList, v.Name)
+    end
+    for i, v in pairs(localPlayer.Character:GetChildren()) do 
+        if v:IsA("Tool") then 
+            table.insert(backpackList, v.Name)
+        end
+    end
+    uiEssentials.ChooseWeapon = FarmSection:AddDropdown({ Name = "Choose Weapon", Flag = "Choose Weapon", Value = backpackList[1], List = backpackList, UpdateList = function(newList) end, Callback = function(v) getgenv().weaponChoice = v end })
+    uiEssentials.RefreshWeaponDropdown = FarmSection:AddButton({ Name = "Refresh Weapon Dropdown",
+        Callback = function()
+            backpackList = {}
+            for i, v in pairs(localPlayer.Backpack:GetChildren()) do 
+                if string.match(v.Name, "Rod") then 
+                    table.insert(backpackList, v.Name)
+                end
+            end
+
+            for i, v in pairs(localPlayer.Character:GetChildren()) do 
+                if string.match(v.Name, "Rod") then 
+                    table.insert(backpackList, v.Name)
+                end
+            end
+            uiEssentials.ChooseWeapon.UpdateList(backpackList)
+        end
+    })
+
+    uiEssentials.BossFarm = FarmSection:AddToggle({ Name = "Boss Farm", Flag = "Boss Farm", 
+        Callback = function(v) 
+            if v then
+                blockBossAntiLoadFunc()
+                if not weaponChoice then 
+                    StarterGui:SetCore("SendNotification",{
+                        Title = "Boss Farm", -- Required
+                        Text = "Please choose a weapon, then retoggle!", -- Required
+                        Duration = 4
+                    }) 		
+                    return 
+                end 
+                
+                autoBossEv = renderStepped:Connect(function()
+                    for i, v in next, ReplicatedStorage.RS.Story.Enemies:GetChildren() do 
+                        if v:FindFirstChild("AppearAt") and not workspace.Enemies:FindFirstChild(v.Name) then 
+                            v.AppearAt.Value = 0
+                            v.Parent = enemiesFolder
+                        end
+                    end
+                
+                    for i, v in next, ReplicatedStorage.RS.Quest.Enemies:GetChildren() do 
+                        if v:FindFirstChild("AppearAtQuest") and not workspace.Enemies:FindFirstChild("Cernyx") then 
+                            v.AppearAtQuest.Value = 0
+                            v.Parent = enemiesFolder
+                        end
+                    end
+                
+                    if localPlayer.Character and weaponChoice then
+                        local character = localPlayer.Character
+                
+                        if character:FindFirstChild("HumanoidRootPart") then 
+                            local root = character.HumanoidRootPart
+                
+                            if not root:FindFirstChild("BodyVelocity") then 
+                                local bodyVel = Instance.new("BodyVelocity", root)
+                                bodyVel.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+                                bodyVel.Velocity = Vector3.new(0, 0, 0)
+                            end 
+                
+                            if enemiesFolder:FindFirstChild("Boss", true) then 
+                                local boss = enemiesFolder:FindFirstChild("Boss", true).Parent 
+                
+                                if boss.Name == "Revon" then 
+                                    boss:Destroy()
+                                end 
+    
+                                if boss.Name ~= "Revon" and boss:FindFirstChild("HumanoidRootPart") and boss:FindFirstChild("Humanoid") then 
+                                    local bossRoot = boss.HumanoidRootPart
+                                    local bossHumanoid = boss.Humanoid
+                
+                                    root.CFrame = bossRoot.CFrame * CFrame.new(0, 0, 5) -- Changing our root part's position so we appear behind the boss
+                                    if not bossRoot:FindFirstChild("BodyVelocity") then 
+                                        local bodyVel = Instance.new("BodyVelocity", BossHRP)
+                                        bodyVel.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+                                        bodyVel.Velocity = Vector3.new(0, 0, 0)
+                                    end
+                
+                                    if localPlayer.Backpack:FindFirstChild(weaponChoice) then 
+                                        localPlayer.Backpack[weaponChoice].Parent = character
+                                    end
+                
+                                    if character:FindFirstChildWhichIsA("Tool") then 
+                                        local tool = character:FindFirstChildWhichIsA("Tool")
+                
+                                        if tool.Name ~= weaponChoice then
+                                            tool.Parent = localPlayer.Backpack
+                                        end
+                                    end
+                
+                                    if bossHumanoid.Health <= 0 then 
+                                        boss:Destroy()
+                                    end
+                                    if character:FindFirstChildWhichIsA("Tool") and localPlayer:DistanceFromCharacter(bossRoot.Position) <= 50 then 
+                                        local tool = character:FindFirstChildWhichIsA("Tool")
+                                        dealWeaponDamageRemote:FireServer(0, character, boss, tool, "Slash")
+                                    end
+                
+                                    if localPlayer:DistanceFromCharacter(bossRoot.Position) <= 50 and character:FindFirstChild("Boxing") or character:FindFirstChild("Canon Fist") or character:FindFirstChild("Iron Leg") or character:FindFirstChild("Sailor Fist") or character:FindFirstChild("Thermo Fist") or character:FindFirstChild("Basic Combat") then 
+                                        useMeleeRemote:FireServer(character:FindFirstChildWhichIsA("Tool"), nil, Vector3.new(0, 0, 0))
+                                        dealStrengthDamageRemote:FireServer(0, character, boss, character:FindFirstChildWhichIsA("Tool"), "Attack")  
+                                    end
+                                end
+                
+                            else 
+                                root.CFrame = CFrame.new(5338, 11835, 6994)
+                            end
+                        end
+                    end
+                end)
+            else 
+                if autoBossEv then autoBossEv:Disconnect(); autoBossEv = nil end 
+            end
+        end 
+    })
+    coroutineResume(coroutineCreate(function()
+        while taskWait() do 
+            if localPlayer.Character and silentAutoFish and fishingRodChoice then 
+                local character = localPlayer.Character 
+    
+                for i, v in next, character:GetChildren() do 
+                    if string.match(v.Name, "Rod") then 
+                        local rod = v  
+                        if rod.Parent == character then 
+                            rod.Parent = localPlayer.Backpack
+                        end
+                    end
+                end
+                
+                if localPlayer.Backpack:FindFirstChild(fishingRodChoice) then
+                    if character:FindFirstChild("FishBiteGoal") then
+                        fishStateRemote:FireServer("Reel") 
+                        fishing = false
+                    end
+    
+                    if not fishing and not character:FindFirstChild("FishBiteGoal") then 
+                        fishing = true 
+                        taskWait(1)
+                        fishingRemote:FireServer(localPlayer.Backpack[fishingRodChoice])
+                        fishStateRemote:FireServer("StopClock")
+                        fishClockRemote:FireServer(localPlayer.Backpack[fishingRodChoice], nil, vector3New(530, 400, 3021))
+    
+                        StarterGui:SetCore("SendNotification",{
+                            Title = "Fish Anywhere", -- Required
+                            Text = "Fishing...", -- Required
+                            Duration = 1
+                        }) 		
+                    end
+                    if fishing and not character:FindFirstChild("FishClock") then 
+                        taskWait(1)
+                        fishingRemote:FireServer(localPlayer.Backpack[fishingRodChoice])
+                        fishStateRemote:FireServer("StopClock")
+                        fishClockRemote:FireServer(localPlayer.Backpack[fishingRodChoice], nil, vector3New(530, 400, 3021))
+                    end
+                    taskWait(2)
+                    if not character:FindFirstChild("FishClock") then 
+                        fishingRemote:FireServer(localPlayer.Backpack[fishingRodChoice])
+                        fishStateRemote:FireServer("StopClock")
+                        fishClockRemote:FireServer(localPlayer.Backpack[fishingRodChoice], nil, vector3New(530, 400, 3021))
+                    end
+                end
+            end
+        end
+    end))
+
     --gameEssentialVariables.
     -- Essential Hooks Disable Mob Damage/AI, Damage Multiplier 
     local disableMobAIHook; disableMobAIHook = hookmetamethod(game, "__namecall", function(self, ...)
@@ -3150,7 +3355,6 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
 
         return disableMobDamageHook(self, unpack(args))
     end)
-
 end 
 
 queueTeleport([[loadstring(game:HttpGet("https://raw.githubusercontent.com/asxhes/robloxScripts/main/anomaly.lua"))()]])

@@ -2172,6 +2172,33 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
             end
         end
     })
+    uiEssentials.BoatSpeedSlider = BoatModificationsSection:AddSlider({ Name = "Boat Speed", Flag = "Boat Speed Slider", Value = 50, Min = 50, Max = 200, Callback = function(v) getgenv().boatSpeed = v end })
+    uiEssentials.BoatSpeed = BoatModificationsSection:AddToggle({ Name = "Set Speed", Flag = "Set Boat Speed",
+        Callback = function(v)
+            if v then 
+               boatSpeedEv = renderStepped:Connect(function()
+                    if boatsFolder:FindFirstChild(tostring(localPlayer) .. "Boat") then 
+                        local boat = boatsFolder[tostring(localPlayer) .. "Boat"]
+                        
+                        if boat:FindFirstChild("Center") then 
+                            local centerBoatPart = boat.Center
+                            
+                            if centerBoatPart:FindFirstChild("SailV") then 
+                                local sailVelocityObject = centerBoatPart.SailV
+                                
+                                if sailVelocityObject.Velocity.Magnitude > 0.1 and boatSpeed then
+                                    sailVelocityObject.Velocity = sailVelocityObject.Velocity.Unit * boatSpeed
+                                end
+                            end
+                        end
+                    end
+                end)
+            else 
+                if boatSpeedEv then boatSpeedEv:Disconnect(); boatSpeedEv = nil end 
+            end
+        end
+    })
+
     local HeadlessHeadClient = GeneralSection:AddToggle({ Name = "Headless Head [CLIENT]", Flag = "Headless Head [CLIENT]",
         Callback = function(v)
             if v then 

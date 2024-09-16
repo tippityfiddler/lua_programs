@@ -2654,7 +2654,20 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
                                     local health = round(humanoid.Health)
                                     local maxHealth = round(humanoid.MaxHealth)
 
-                                    textEsp.Text = "[" .. player.Name .. "]" .. "[" .. distanceFromHeadPos .. "] \n [" .. health .. "/" .. maxHealth .. "]"
+                                    if head:FindFirstChild("Overhead") and head.Overhead:FindFirstChild("Level") then 
+                                        local overhead = head.Overhead
+                                        local level = overhead.Level
+    
+                                        if player:FindFirstChild("bin") and player.bin:FindFirstChild("Awakening") then 
+                                            local awakening = player.bin.Awakening
+                                            if awakening.Value == "" then 
+                                                textEsp.Text = "[" .. player.Name .. "]" .. "[" .. distanceFromHeadPos .. "] \n [" .. health .. "/" .. maxHealth .. "] \n [Level: ".. string.sub(level.Text, 7, 10) .. "]" .. "[Awakening: " .. "none" .. "]"
+                                            else
+                                                textEsp.Text = "[" .. player.Name .. "]" .. "[" .. distanceFromHeadPos.. "] \n [" .. health .. "/" .. maxHealth .. "] \n [Level: ".. string.sub(level.Text, 7, 10) .. "]" .. "[Awakening: " .. awakening.Value .. "]"										
+                                            end
+                                        end 
+                                    end
+
                                     textEsp.Color = Color3.fromRGB(255, 255, 255)
                                     textEsp.Position = vector2New(headPos.X, headPos.Y)
                                     textEsp.Visible = (isFFA or localPlayer.Team ~= player.Team) and onScreen
@@ -3053,6 +3066,7 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
         while taskWait() do 
             local x = false 
             if chestFarm then 
+                local nearestChest = getNearestChest()
                 if localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") then
                     local rootPart = localPlayer.Character.HumanoidRootPart
 
@@ -3064,9 +3078,7 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
                 end 
                 if not x then 
                     x = true 
-
-                    gameEssentialVariables.chestEv = RunService.RenderStepped:Connect(function()
-                        local nearestChest = getNearestChest()
+                    chestEv = RunService.RenderStepped:Connect(function()
                         if chestFarm and localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") and nearestChest and nearestChest.Parent and not nearestChest.Parent:FindFirstChild("Open") then
                             local rootPart = localPlayer.Character.HumanoidRootPart
 
@@ -3081,15 +3093,14 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
                         end
                     end)
                 end 
-                    
                 if localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") and nearestChest and nearestChest.Parent then 
                     local character = localPlayer.Character
-                    task.wait(10)
+                    taskWait(10)
                     openChestRemote:FireServer(nearestChest.Parent)
                 end
             else  
                 x = false 
-                gameEssentialVariables.chestEv:Disconnect()
+                if chestEv then chestEv:Disconnect(); chestEv = nil end 
             end
         end
     end))

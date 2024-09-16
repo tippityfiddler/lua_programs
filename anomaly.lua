@@ -2202,20 +2202,23 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
                     end
                 end
                 
-                gameEssentialVariables.headlessHeadEv = localPlayer.CharacterAdded:Connect(function(character)
-                    repeat taskWait() until character:FindFirstChild("Head")
-                    local head = character.Head
-                    head.Transparency = 1
-
-                    for i, v in next, head:GetChildren() do 
-                        if v:IsA("Decal") then
-                            v:Destroy()
-                        end
-                    end
+                removeDecalChildren = renderStepped:Connect(function()
+                    if localPlayer.Character then 
+                        local character = localPlayer.Character 
+                        if character:FindFirstChild("Head") then 
+                            local head = character.Head 
+                            head.Transparency = 1
+                            for i, v in next, head:GetChildren() do 
+                                if v:IsA("Decal") then
+                                    v:Destroy()
+                                end
+                            end
+                        end 
+                    end 
                 end)
 
             else 
-                if gameEssentialVariables.headlessHeadEv then gameEssentialVariables.headlessHeadEv:Disconnect(); gameEssentialVariables.headlessHeadEv = nil end 
+                if removeDecalChildren then removeDecalChildren:Disconnect(); removeDecalChildren = nil end 
                 localPlayer.Character.Head.Transparency = 0
                 local eyes = Instance.new("Decal", localPlayer.Character.Head)
                 local mouth = Instance.new("Decal", localPlayer.Character.Head)
@@ -2238,6 +2241,23 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
                 iris.ZIndex = 2
                 iris.Color3 = irisColor
                 iris.Face = Enum.NormalId.Front
+            end
+        end
+    })
+
+    local NoDodgeCooldown = GeneralSection:AddToggle({ Name = "No Dodge Cooldown", Flag = "No Dodge Cooldown",
+        Callback = function(v)
+            if v then 
+                noDodgeCooldownEv = renderStepped:Connect(function()
+                    if localPlayer.Character then 
+                        local character = localPlayer.Character 
+                        if character:FindFirstChild("DodgeCD") then 
+                            character.DodgeCD:Destroy() 
+                        end
+                    end 
+                end)
+            else 
+                if noDodgeCooldownEv then noDodgeCooldownEv:Disconnect(); noDodgeCooldownEv = nil end 
             end
         end
     })
@@ -3170,7 +3190,14 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
                     }) 		
                     return 
                 end 
-                
+                if disableMobAI then
+                    StarterGui:SetCore("SendNotification",{
+                        Title = "Boss Farm", -- Required
+                        Text = "Please turn off the Disable Mob AI feature, then retoggle!", -- Required
+                        Duration = 4
+                    }) 		
+                    return   
+                end
                 autoBossEv = renderStepped:Connect(function()
                     for i, v in next, ReplicatedStorage.RS.Story.Enemies:GetChildren() do 
                         if v:FindFirstChild("AppearAt") and not workspace.Enemies:FindFirstChild(v.Name) then 
@@ -3250,6 +3277,14 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
                 end)
             else 
                 if autoBossEv then autoBossEv:Disconnect(); autoBossEv = nil end 
+                if localPlayer.Character then 
+                    local character = localPlayer.Character
+                    if character:FindFirstChild("HumanoidRootPart") then 
+                        if character.HumanoidRootPart:FindFirstChild("BodyVelocity") then 
+                            repeat taskWait() character.HumanoidRootPart.BodyVelocity:Destroy() until not character.HumanoidRootPart:FindFirstChild("BodyVelocity")
+                        end
+                    end
+                end
             end
         end 
     })

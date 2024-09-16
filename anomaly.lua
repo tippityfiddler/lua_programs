@@ -1500,6 +1500,29 @@ elseif game.PlaceId == supportedGames["MVSD"]["Default Server"] or game.PlaceId 
     
     disableAntiCheat() 
 
+    local function teleportToServer(placeId) 
+        local response = httpRequest({Url = "https://games.roblox.com/v1/games/".. placeId .. "/servers/0?sortOrder=2&excludeFullGames=true&limit=100"})
+        local parsed = HttpService:JSONDecode(response.Body)
+        local serverList = {}
+
+        for i, v in next, parsed.data do
+            local serverJobId = v.id
+            if serverJobId ~= game.JobId then
+                table.insert(serverList, serverJobId)
+            end
+        end
+        if #serverList == 0 then
+            StarterGui:SetCore("SendNotification", {
+                Title = "ERROR";
+                Text = "Couldn't find different servers";
+                Duration = 3;
+            })     
+        else
+            local randomServer = serverList[math.random(1, #serverList)]
+            TeleportService:TeleportToPlaceInstance(placeId, randomServer, localPlayer, nil, TeleportService:GetLocalPlayerTeleportData() or 1)
+        end
+    end 
+   
     local SilentAim = GeneralSection:AddToggle({ Name = "Silent Aim", Flag = "Silent Aim [MVSD]", Callback = function(v) silentAim = v end })
     local KillAll = GeneralSection:AddToggle({ Name = "Kill All", Flag = "Kill All [MVSD]", 
         Callback = function(v) 

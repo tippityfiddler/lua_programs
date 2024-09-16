@@ -1,12 +1,6 @@
 repeat task.wait() until game:IsLoaded()
+if AnomalyLoaded then return end 
 getgenv().AnomalyLoaded = true 
-if AnomalyLoaded then 
-    getgenv().hooks = {
-        disableMobDamage = nil,
-        disableMobAI = nil, 
-        damageMultiplier = nil 
-    } 
-end 
 -- Services:
 -- Self Note: Do Not Copy and Paste Health Bar ESP, Box ESP or Text ESP from MVSD portion of code 
 local Players = game:GetService("Players")

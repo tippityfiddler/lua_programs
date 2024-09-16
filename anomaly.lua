@@ -804,6 +804,7 @@ if game.PlaceId == supportedGames["Weaponry"] then
             end 
         end
     })
+    local EspColor = EspSection:AddColorpicker({ Name = "Player ESP Color", Flag = "Player ESP Color", Callback = function(v) getgenv().espColor = v end }) 
     local BoxESP = EspSection:CreateToggle({ Name = "Box ESP", CurrentValue = false, Flag = "Box ESP [Weaponry]", 
         Callback = function(v)
             if v then 
@@ -850,6 +851,9 @@ if game.PlaceId == supportedGames["Weaponry"] then
                                     boxOutline.Visible = (isFFA or localPlayer.Team ~= player.Team) and onScreen
                                     box.Visible = boxOutline.Visible
 
+                                    if espColor then 
+                                        box.Color = espColor
+                                    end 
                                 else 
                                     boxOutline.Visible = false 
                                     box.Visible = false
@@ -910,10 +914,12 @@ if game.PlaceId == supportedGames["Weaponry"] then
                                     local maxHealth = round(humanoid.MaxHealth)
 
                                     textEsp.Text = "[" .. player.Name .. "]" .. "[" .. distanceFromHeadPos .. "] \n [" .. health .. "/" .. maxHealth .. "]"
-                                    textEsp.Color = Color3.fromRGB(255, 255, 255)
                                     textEsp.Position = vector2New(headPos.X, headPos.Y)
                                     textEsp.Visible = (isFFA or localPlayer.Team ~= player.Team) and onScreen
 
+                                    if espColor then 
+                                        textEsp.Color = espColor
+                                    end 
                                 else 
                                     textEsp.Visible = false 
                                 end 
@@ -1211,6 +1217,7 @@ elseif game.PlaceId == supportedGames["War Tycoon"] then
             end 
         end 
     })
+    local EspColor = EspSection:AddColorpicker({ Name = "Player ESP Color", Flag = "Player ESP Color", Callback = function(v) getgenv().espColor = v end }) 
     local BoxESP = EspSection:CreateToggle({ Name = "Box ESP", CurrentValue = false, Flag = "Box ESP [Weaponry]", 
         Callback = function(v)
             if v then 
@@ -1256,7 +1263,9 @@ elseif game.PlaceId == supportedGames["War Tycoon"] then
                                     
                                     boxOutline.Visible = (isFFA or localPlayer.Team ~= player.Team) and onScreen
                                     box.Visible = boxOutline.Visible
-
+                                    if espColor then 
+                                        box.Color = espColor 
+                                    end 
                                 else 
                                     boxOutline.Visible = false 
                                     box.Visible = false
@@ -1317,10 +1326,11 @@ elseif game.PlaceId == supportedGames["War Tycoon"] then
                                     local maxHealth = round(humanoid.MaxHealth)
 
                                     textEsp.Text = "[" .. player.Name .. "]" .. "[" .. distanceFromHeadPos .. "] \n [" .. health .. "/" .. maxHealth .. "]"
-                                    textEsp.Color = Color3.fromRGB(255, 255, 255)
                                     textEsp.Position = vector2New(headPos.X, headPos.Y)
                                     textEsp.Visible = (isFFA or localPlayer.Team ~= player.Team) and onScreen
-
+                                    if espColor then 
+                                        textEsp.Color = espColor
+                                    end 
                                 else 
                                     textEsp.Visible = false 
                                 end 
@@ -1603,7 +1613,7 @@ elseif game.PlaceId == supportedGames["MVSD"]["Default Server"] or game.PlaceId 
             end
         end 
     })
-
+    local EspColor = EspSection:AddColorpicker({ Name = "Player ESP Color", Flag = "Player ESP Color", Callback = function(v) getgenv().espColor = v end }) 
     local BoxESP = EspSection:CreateToggle({ Name = "Box ESP", CurrentValue = false, Flag = "Box ESP [Weaponry]", 
         Callback = function(v)
             if v then 
@@ -1650,6 +1660,9 @@ elseif game.PlaceId == supportedGames["MVSD"]["Default Server"] or game.PlaceId 
                                     boxOutline.Visible = (isFFA or localPlayer.Team ~= player.Team) and onScreen
                                     box.Visible = boxOutline.Visible
 
+                                    if espColor then 
+                                        box.Color = espColor
+                                    end 
                                 else 
                                     boxOutline.Visible = false 
                                     box.Visible = false
@@ -1710,10 +1723,11 @@ elseif game.PlaceId == supportedGames["MVSD"]["Default Server"] or game.PlaceId 
                                     local maxHealth = round(humanoid.MaxHealth)
 
                                     textEsp.Text = "[" .. player.Name .. "]" .. "[" .. distanceFromHeadPos .. "] \n [" .. health .. "/" .. maxHealth .. "]"
-                                    textEsp.Color = Color3.fromRGB(255, 255, 255)
                                     textEsp.Position = vector2New(headPos.X, headPos.Y)
                                     textEsp.Visible = (isFFA or localPlayer.Team ~= player.Team) and onScreen
-
+                                    if textEsp then 
+                                        textEsp.Color = espColor
+                                    end 
                                 else 
                                     textEsp.Visible = false 
                                 end 
@@ -2334,15 +2348,17 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
                         if not workspace.Map:FindFirstChild("Jesus") then 
                             gameEssentialVariables.jesusPart = Instance.new("Part", workspace.Map)
                         end
-                        gameEssentialVariables.jesusPart.Name = "Jesus"
-                        gameEssentialVariables.jesusPart.Size = vector3New(2048, 0, 2048)
-                        gameEssentialVariables.jesusPart.Anchored = true 
-                        gameEssentialVariables.jesusPart.Transparency = 0.999999
-                        gameEssentialVariables.jesusPart.Position = vector3New(leftFoot.Position.X, ocean.Position.Y, leftFoot.Position.Z)
+                        if gameEssentialVariables.jesusPart then 
+                            gameEssentialVariables.jesusPart.Name = "Jesus"
+                            gameEssentialVariables.jesusPart.Size = vector3New(2048, 0, 2048)
+                            gameEssentialVariables.jesusPart.Anchored = true 
+                            gameEssentialVariables.jesusPart.Transparency = 0.999999
+                            gameEssentialVariables.jesusPart.Position = vector3New(leftFoot.Position.X, ocean.Position.Y, leftFoot.Position.Z)
+                        end 
                     end
                 end)
             else 
-                if gameEssentialVariables.walkOnWaterEv then gameEssentialVariables.walkOnWaterEv:Disconnect(); gameEssentialVariables.walkOnWaterEv = nil end 
+                if gameEssentialVariables.walkOnWaterEv then gameEssentialVariables.walkOnWaterEv:Disconnect(); gameEssentialVariables.walkOnWaterEv = nil; gameEssentialVariables.jesusPart = nil end 
                 workspace.Map.Jesus:Destroy()
             end 
         end
@@ -2590,6 +2606,7 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
     })
 
     local PlayerESPRange = EspSection:AddSlider({ Name = "Player ESP Range", Flag = "Player ESP Range Slider", Value = 1000, Min = 1000, Max = 25000, Callback = function(v) playerEspRange = v end })
+    uiEssentials.EspColor = EspSection:AddColorpicker({ Name = "Player ESP Color", Flag = "Player ESP Color", Callback = function(v) getgenv().espColor = v end }) 
     local BoxESP = EspSection:CreateToggle({ Name = "Box ESP", CurrentValue = false, Flag = "Box ESP [Weaponry]", 
         Callback = function(v)
             if v then 
@@ -2635,7 +2652,9 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
                                     
                                     boxOutline.Visible = (isFFA or localPlayer.Team ~= player.Team) and onScreen
                                     box.Visible = boxOutline.Visible
-
+                                    if espColor then 
+                                        box.Color = espColor
+                                    end 
                                 else 
                                     boxOutline.Visible = false 
                                     box.Visible = false
@@ -2709,7 +2728,9 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
                                         end 
                                     end
 
-                                    textEsp.Color = Color3.fromRGB(255, 255, 255)
+                                    if espColor then 
+                                        textEsp.Color = espColor
+                                    end 
                                     textEsp.Position = vector2New(headPos.X, headPos.Y)
                                     textEsp.Visible = (isFFA or localPlayer.Team ~= player.Team) and onScreen
 

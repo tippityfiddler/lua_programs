@@ -3034,7 +3034,6 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
         Callback = function(v)
             getgenv().chestFarm = v 
             if not v then 
-                if gameEssentialVariables.chestFarmEv then gameEssentialVariables.chestFarmEv:Disconnect(); gameEssentialVariables.chestFarmEv = nil end 
                 if localPlayer.Character then 
                     local character = localPlayer.Character
                     if character:FindFirstChild("HumanoidRootPart") then 
@@ -3052,8 +3051,8 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
 
     coroutineResume(coroutineCreate(function()
         while taskWait() do 
+            local x = false 
             if chestFarm then 
-                local nearestChest = getNearestChest()
                 if localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") then
                     local rootPart = localPlayer.Character.HumanoidRootPart
 
@@ -3063,25 +3062,34 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
                         bodyVel.Velocity = Vector3.new(0, 0, 0)
                     end
                 end 
-                gameEssentialVariables.chestEv = RunService.RenderStepped:Connect(function()
-                    if chestFarm and localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") and nearestChest and nearestChest.Parent and not nearestChest.Parent:FindFirstChild("Open") then
-                        local rootPart = localPlayer.Character.HumanoidRootPart
+                if not x then 
+                    x = true 
 
-                        if not rootPart:FindFirstChild("BodyVelocity") then
-                            local bodyVel = Instance.new("BodyVelocity", rootPart)
-                                
-                            bodyVel.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-                            bodyVel.Velocity = Vector3.new(0, 0, 0)
+                    gameEssentialVariables.chestEv = RunService.RenderStepped:Connect(function()
+                        local nearestChest = getNearestChest()
+                        if chestFarm and localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") and nearestChest and nearestChest.Parent and not nearestChest.Parent:FindFirstChild("Open") then
+                            local rootPart = localPlayer.Character.HumanoidRootPart
+
+                            if not rootPart:FindFirstChild("BodyVelocity") then
+                                local bodyVel = Instance.new("BodyVelocity", rootPart)
+                                    
+                                bodyVel.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+                                bodyVel.Velocity = Vector3.new(0, 0, 0)
+                            end
+                            rootPart.CFrame = nearestChest.CFrame * CFrame.new(0, -12, 0)
+                            noClip()
                         end
-                        rootPart.CFrame = nearestChest.CFrame * CFrame.new(0, -12, 0)
-                    end
-                    noClip()
-                end)
+                    end)
+                end 
+                    
                 if localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") and nearestChest and nearestChest.Parent then 
                     local character = localPlayer.Character
                     task.wait(10)
                     openChestRemote:FireServer(nearestChest.Parent)
                 end
+            else  
+                x = false 
+                gameEssentialVariables.chestEv:Disconnect()
             end
         end
     end))

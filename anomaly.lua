@@ -436,7 +436,7 @@ local function removePlayerDrawingCache(name, player)
 end 
 
 -- UI Essential Universal Functions/Sections/Tabs/Button:
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/asxhes/robloxScripts/main/ui%20library.lua"))()
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/asxhes/lua_programs/refs/heads/main/pepsi_ui_library.lua"))()
 local Anomaly = Library:CreateWindow({ Name = "Anomaly", Themeable = { Info = "Discord Server: VzYTJ7Y" } })
 local GeneralTab = Anomaly:CreateTab({ Name = "General" })
 local LightingSection = GeneralTab:CreateSection({ Name = "Lighting" })
@@ -3463,4 +3463,4 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
     end)
 end 
 
-queueTeleport([[loadstring(game:HttpGet("https://raw.githubusercontent.com/asxhes/robloxScripts/main/anomaly.lua"))()]])
+queueTeleport([[loadstring(game:HttpGet("https://raw.githubusercontent.com/asxhes/lua_programs/refs/heads/main/anomaly.lua"))()]])

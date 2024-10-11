@@ -330,7 +330,7 @@ local function addPlayerToDrawingCache(name, player) -- name refers to the drawi
                     Outline = true, 
                     Position = vector2New(0, 0),
                     Size = 14,
-                    Font = 3
+                    Font = 2
                 })
             }
         end 
@@ -385,7 +385,7 @@ local function addPlayerToDrawingCache(name, player) -- name refers to the drawi
                 Outline = true, 
                 Position = vector2New(0, 0),
                 Size = 14,
-                Font = 3
+                Font = 2
             })
         }
     elseif name == "Chest Text" then 
@@ -398,7 +398,7 @@ local function addPlayerToDrawingCache(name, player) -- name refers to the drawi
                 Outline = true, 
                 Position = vector2New(0, 0),
                 Size = 14,
-                Font = 3
+                Font = 2
             })
         }
     end 
@@ -525,11 +525,10 @@ if game.PlaceId == supportedGames["Weaponry"] then
             end
         end
     end
-    getgenv().uiEssentials = {}
     local GunModsSection = GeneralTab:CreateSection({ Name = "Gun Modifications", Side = "Right" })
     local SilentAim = GeneralSection:AddToggle({ Name = "Silent Aim", Flag = "Silent Aim", Callback = function(v) silentAim = v end })
-    uiEssentials.Wallbang = GeneralSection:AddToggle({ Name = "Wallbang [SNIPERS ONLY]", Flag = "Wallbang [SNIPERS ONLY]", Callback = function(v) wallbang = v end })
-    uiEssentials.RainbowGun = GeneralSection:AddToggle({ Name = "Rainbow Gun", Flag = "Rainbow Gun", 
+    local Wallbang = GeneralSection:AddToggle({ Name = "Wallbang [SNIPERS ONLY]", Flag = "Wallbang [SNIPERS ONLY]", Callback = function(v) wallbang = v end })
+    local RainbowGun = GeneralSection:AddToggle({ Name = "Rainbow Gun", Flag = "Rainbow Gun", 
         Callback = function(v) 
             rainbowGun = v
             if v then 
@@ -563,10 +562,10 @@ if game.PlaceId == supportedGames["Weaponry"] then
             end 
         end 
     })
-    uiEssentials.RejoinServer = GeneralSection:AddButton({ Name = "Rejoin Server", Callback = function() rejoinServer() end })
-    uiEssentials.ServerHop = GeneralSection:AddButton({ Name = "Server Hop", Callback = function() serverHop() end })
-    uiEssentials.InfiniteYield = GeneralSection:AddButton({ Name = "Infinite Yield", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))() end })
-    uiEssentials.AlwaysShowCursor = GeneralSection:AddToggle({ Name = "Always Show Cursor", Flag = "Always Show Cursor", 
+    local RejoinServer = GeneralSection:AddButton({ Name = "Rejoin Server", Callback = function() rejoinServer() end })
+    local ServerHop = GeneralSection:AddButton({ Name = "Server Hop", Callback = function() serverHop() end })
+    local InfiniteYield = GeneralSection:AddButton({ Name = "Infinite Yield", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))() end })
+    local AlwaysShowCursor = GeneralSection:AddToggle({ Name = "Always Show Cursor", Flag = "Always Show Cursor", 
         Callback = function(v)
             if v then 
                 showCursor = renderStepped:Connect(function()
@@ -578,7 +577,7 @@ if game.PlaceId == supportedGames["Weaponry"] then
         end
     })
 
-    uiEssentials.HitboxExpanderTorso = GeneralSection:AddToggle({ Name = "Hitbox Expander [TORSO]", Flag = "Hitbox Expander [TORSO]", 
+    local HitboxExpanderTorso = GeneralSection:AddToggle({ Name = "Hitbox Expander [TORSO]", Flag = "Hitbox Expander [TORSO]", 
         Callback = function(v) 
             if v then 
                 hitboxExpanderTorsoEv = renderStepped:Connect(function() 

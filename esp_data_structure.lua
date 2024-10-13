@@ -1,10 +1,9 @@
 local ESP = {}
-local cache = {}
 local round = math.floor 
 
 ESP.__index = ESP 
 
-function ESP:hasESP(player) 
+function ESP:hasESP(player, cache) 
     local key = player.Name .. "_" .. self.drawingName
     return cache[key] ~= nil
 end 
@@ -25,14 +24,14 @@ function ESP:new(drawingName, typeOfEsp, properties)
     return obj 
 end 
 
-function ESP:add(player)
+function ESP:add(player, cache)
     if self:hasESP(player) then return end 
     local key = player.Name .. "_" .. self.drawingName 
     self.currentPlayer = player 
     cache[key] = self 
 end 
 
-function ESP:remove(player)
+function ESP:remove(player, cache)
     local key = player.Name .. "_" .. self.drawingName
     if cache[key] then 
         self.drawing:Remove() 

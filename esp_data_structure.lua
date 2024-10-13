@@ -25,7 +25,7 @@ function ESP:new(drawingName, typeOfEsp, properties)
 end 
 
 function ESP:add(player, cache)
-    if self:hasESP(player) then return end 
+    if self:hasESP(player, cache) then return end 
     local key = player.Name .. "_" .. self.drawingName 
     self.currentPlayer = player 
     cache[key] = self 
@@ -44,7 +44,7 @@ function ESP:remove(player, cache)
 end 
 
 function ESP:updateESP(localPlayer, player, camera, isFFA)
-    if self:hasESP(player)  then
+    if self:hasESP(player, cache) then
         local character = player.Character 
 
         if character then 

@@ -8,6 +8,9 @@ function Queue:new(maxSize)
     return obj 
 end 
 
+function Queue:isEmpty()
+    return #self.items == 0
+end 
 -- enqueue method of the object essentially adds an item to the BACK of the list/queue
 function Queue:enqueue(item) 
     if self:isFull() then return end 
@@ -15,6 +18,7 @@ function Queue:enqueue(item)
 end 
 -- dequeue method basically removes the first item in the list and then shifts all items before the item removed to the left
 function Queue:dequeue()
+    if self:isEmpty() then return end 
     self.items[1] = nil 
     for i = 1, #self.items - 1 do 
         self.items[i] = self.items[i + 1]

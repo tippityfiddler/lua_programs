@@ -43,7 +43,7 @@ function ESP:remove(player, cache)
     end 
 end 
 
-function ESP:updateESP(localPlayer, player, camera, isFFA)
+function ESP:updateESP(localPlayer, player, camera, isFFA, cache)
     if self:hasESP(player, cache) then
         local character = player.Character 
 

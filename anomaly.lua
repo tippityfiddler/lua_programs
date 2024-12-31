@@ -34,6 +34,8 @@ local boxEspCache = {}
 local healthBarEspCache = {}
 local boatEspCache = {}
 local chestEspCache = {}
+local box3DCache = {}
+local linesCache = {}
 
 local supportedGames = {
     ["Weaponry"] = 3297964905,
@@ -80,7 +82,7 @@ local playerAdded = Players.PlayerAdded
 local playerRemoving = Players.PlayerRemoving
 local taskCancel = task.cancel 
 local tenv = gettenv 
-local getRegistry = debug.getregistry 
+local getRegistry = debug.getregistry or getreg
 
 local getNilInstances = getnilinstances 
 local getInfo = debug.getinfo 
@@ -230,8 +232,8 @@ local function getNearestPlayerHead()
                                 local headPos, onScreen = wtvp(camera, head.Position)
                 
                                 if onScreen then 
-                                    local distanceFromHead = (vector2New(mouse.X, mouse.Y) - vector2New(headPos.X, headPos.Y)).Magnitude
-                
+                                    --local distanceFromHead = (vector2New(mouse.X, mouse.Y) - vector2New(headPos.X, headPos.Y)).Magnitude
+                                    local distanceFromHead = localPlayer.DistanceFromCharacter(localPlayer, head.Position)
                                     if distanceFromHead < distance then 
                                         distance = distanceFromHead
                                         target = head
@@ -342,7 +344,7 @@ local function addPlayerToDrawingCache(name, player) -- name refers to the drawi
                     Visible = false,
                     Color = Color3.fromRGB(0, 0, 0),
                     Filled = false,
-                    Thickness = 2,
+                    Thickness = 3,
                     Transparency = 1
                 }),
 
@@ -358,20 +360,20 @@ local function addPlayerToDrawingCache(name, player) -- name refers to the drawi
     elseif name == "Health Bar" then 
         if not healthBarEspCache[player] then 
             healthBarEspCache[player] = {
-                healthBarOutline = createDrawing("Line", {
+                healthBarOutline = createDrawing("Square", {
                     Visible = false,
-                    From = vector2New(0, 0),
-                    To = vector2New(0, 0),
-                    Color = Color3.fromRGB(0, 0, 0), 
-                    Thickness = 6
+                    Color = Color3.fromRGB(0, 0, 0),
+                    Filled = true,
+                    Thickness = 3,
+                    Transparency = 1
                 }),
 
-                healthBar = createDrawing("Line", {
+                healthBar = createDrawing("Square", {
                     Visible = false,
-                    From = vector2New(0, 0),
-                    To = vector2New(0, 0),
-                    Color = Color3.fromRGB(0, 255, 0), 
-                    Thickness = 4
+                    Color = Color3.fromRGB(255, 255, 255),
+                    Filled = true,
+                    Thickness = 1,
+                    Transparency = 1
                 })
             } 
         end
@@ -399,6 +401,84 @@ local function addPlayerToDrawingCache(name, player) -- name refers to the drawi
                 Position = vector2New(0, 0),
                 Size = 14,
                 Font = 2
+            })
+        }
+
+    elseif name == "3D Box" then 
+        box3DCache[player] = {
+            frontTopLeft = createDrawing("Line", {
+                Thickness = 2,
+                Color = Color3.new(1, 1, 1)
+    
+            }), 
+    
+            frontTopRight = createDrawing("Line", {
+                Thickness = 2,
+                Color = Color3.new(1, 1, 1)
+            }),  
+    
+            frontBottomRight = createDrawing("Line", {
+                Thickness = 2,
+                Color = Color3.new(1, 1, 1)
+            }),
+    
+            frontBottomLeft = createDrawing("Line", {
+                Thickness = 2,
+                Color = Color3.new(1, 1, 1)
+            }),
+    
+            backTopLeft = createDrawing("Line", {
+                Thickness = 2,
+                Color = Color3.new(1, 1, 1)
+    
+            }), 
+    
+            backBottomLeft = createDrawing("Line", {
+                Thickness = 2,
+                Color = Color3.new(1, 1, 1)
+            }),  
+    
+            backTopRight = createDrawing("Line", {
+                Thickness = 2,
+                Color = Color3.new(1, 1, 1)
+            }),
+    
+            backBottomRight = createDrawing("Line", {
+                Thickness = 2,
+                Color = Color3.new(1, 1, 1)
+            }),
+    
+            extraLine1 = createDrawing("Line", {
+                Thickness = 2,
+                Color = Color3.new(1, 1, 1)
+            }),
+      
+            extraLine2 = createDrawing("Line", {
+                Thickness = 2,
+                Color = Color3.new(1, 1, 1)
+            }),
+            
+            extraLine3 = createDrawing("Line", {
+                Thickness = 2,
+                Color = Color3.new(1, 1, 1)
+            }),
+    
+            extraLine4 = createDrawing("Line", {
+                Thickness = 2,
+                Color = Color3.new(1, 1, 1)
+            }),
+    
+            extraLine5 = createDrawing("Line", {
+                Thickness = 2,
+                Color = Color3.new(1, 1, 1)
+            }),
+        }
+    elseif name == "Line" then 
+        linesCache[player] = {
+            line = createDrawing(name, { 
+                Thickness = 1, 
+                Color = Color3.new(1, 1, 1),
+                Outline = true
             })
         }
     end 
@@ -431,6 +511,17 @@ local function removePlayerDrawingCache(name, player)
         if chestEspCache[player] then
             chestEspCache[player].textEsp:Remove()
             chestEspCache[player] = nil
+        end 
+
+    elseif name == "3D Box" then 
+        for i, v in next, box3DCache[player] do 
+            v:Remove()
+        end 
+        box3DCache[player] = nil
+    elseif name == "Line" then 
+        if linesCache[player] then
+            linesCache[player].line:Remove()
+            linesCache[player] = nil
         end 
     end 
 end 
@@ -832,23 +923,28 @@ if game.PlaceId == supportedGames["Weaponry"] then
 
                             if head and humanoid then 
                                 local headPos, onScreen = wtvp(camera, head.Position)
-                                local origin, size = character:GetBoundingBox()
-                                local height = (camera.CFrame - camera.CFrame.Position) * vector3New(0, math.clamp(size.Y, 1, 10) / 2, 0)
+                
+                                --> Dimensions is the object's size/volume in a sense x, y, z 
+                                local centerObjectCFrame, dimensionOfObject = character:GetBoundingBox() 
 
-                                local bottom = wtvp(camera, origin.Position - height)
-                                local top = wtvp(camera, origin.Position + height)
-                                local newHeight = -math.abs(top.Y - bottom.Y)
-
-                                local newSize = vector2New(newHeight / 1.5, newHeight)
+                                --> Since the the center's position is the midpoint from any edge of the cube we add the original position to size of the cube's axis / 2 to get the side lines position
+                                local topOfObject = camera:WorldToViewportPoint(centerObjectCFrame.Position + vector3New(0, dimensionOfObject.Y / 2, 0 )) 
+                                local bottomOfObject = camera:WorldToViewportPoint(centerObjectCFrame.Position + vector3New(0, -dimensionOfObject.Y / 2)) 
+                                local heightOfObject = topOfObject.Y - bottomOfObject.Y 
+                
+                                --> So the height of the health bar is relative to the player's health 
+                                local healthBarHeight = heightOfObject * humanoid.Health / humanoid.MaxHealth
+                
+                                local widthOfObject = heightOfObject / 1.2 --> Dividing by 1.5 because we want it to be a rectangle and this provides a good height to width ratio
+                                local headPos, onScreen = camera:WorldToViewportPoint(head.Position) 
                     
                                 if onScreen and humanoid.Health > 0 then 
-                                    box.Size = newSize
-                                    box.Position = vector2New(headPos.X - newSize.X / 2, headPos.Y - newSize.Y / 1.2)
-
-                                    boxOutline.Size = box.Size 
-                                    boxOutline.Position = box.Position
-                                    
+                                    boxOutline.Size = Vector2.new(widthOfObject, heightOfObject)
+                                    boxOutline.Position = Vector2.new(headPos.X - boxOutline.Size.X / 2, headPos.Y - boxOutline.Size.Y / 1.2) 
                                     boxOutline.Visible = (isFFA or localPlayer.Team ~= player.Team) and onScreen
+
+                                    box.Size = boxOutline.Size 
+                                    box.Position = boxOutline.Position
                                     box.Visible = boxOutline.Visible
 
                                     if espColor then 
@@ -863,7 +959,7 @@ if game.PlaceId == supportedGames["Weaponry"] then
                                 boxOutline.Visible = false 
                                 box.Visible = false
                             end 
-
+                            
                         else 
                             boxOutline.Visible = false 
                             box.Visible = false
@@ -877,6 +973,88 @@ if game.PlaceId == supportedGames["Weaponry"] then
 
                 for i, v in next, Players:GetPlayers() do 
                     removePlayerDrawingCache("Square", v)
+                end 
+            end 
+        end 
+    })
+    local linesPlayerAddedEv, linesPlayerRemovingEv, updateLineEsp
+    local LineEsp = EspSection:CreateToggle({ Name = "Line ESP", CurrentValue = false, Flag = "Line ESP [Weaponry]", 
+        Callback = function(v)
+            if v then 
+                for i, v in next, Players:GetPlayers() do 
+                    if v ~= localPlayer then 
+                        addPlayerToDrawingCache("Line", v)
+                    end 
+                end 
+
+
+                linesPlayerAddedEv = playerAdded:Connect(function(player) addPlayerToDrawingCache("Line", player) end)
+                linesPlayerRemovingEv = playerRemoving:Connect(function(player) removePlayerDrawingCache("Line", player) end)
+
+                updateLineEsp = renderStepped:Connect(function()
+                    for player, cachedDrawings in next, linesCache do 
+                        local isFFA = #Teams:GetChildren() == 0
+                        local line = cachedDrawings.line
+
+                        if player.Character then 
+                            local character = player.Character 
+                            local head = character:FindFirstChild("Head") 
+                            local root = character:FindFirstChild("HumanoidRootPart")
+                            local humanoid = character:FindFirstChild("Humanoid") 
+
+                            local centerObjectCFrame, dimensionOfObject = character:GetBoundingBox() 
+                            local topOfObject = camera:WorldToViewportPoint(centerObjectCFrame.Position + vector3New(0, dimensionOfObject.Y / 2, 0 )) 
+                            local bottomOfObject = camera:WorldToViewportPoint(centerObjectCFrame.Position + vector3New(0, -dimensionOfObject.Y / 2)) 
+                            local heightOfObject = topOfObject.Y - bottomOfObject.Y 
+                            local widthOfObject = heightOfObject / 1.2
+                            
+                            if head and root and humanoid then 
+                                local root2dPos, onScreen = camera:WorldToViewportPoint(root.Position) 
+                                local headPos, onScreen = camera:WorldToViewportPoint(head.Position) 
+
+                                local boxOutlineSize = Vector2.new(widthOfObject, heightOfObject)
+                                local boxOutlinePosition = Vector2.new(headPos.X - boxOutlineSize.X / 2, headPos.Y - boxOutlineSize.Y / 1.2) 
+                                if onScreen and humanoid.Health > 0 then 
+
+                                    line.From = vector2New(mouse.X, mouse.Y + 36)
+
+                                    if boxPlayerAddedEv then 
+                                        local bottomMiddle = Vector2.new(
+                                            boxOutlinePosition.X + boxOutlineSize.X / 2, -- Middle of the bottom edge (X)
+                                            bottomOfObject.Y * (camera.CFrame - camera.CFrame.Position)    -- Bottom edge (Y)
+                                        )
+
+                                        line.To = bottomMiddle
+                                    else 
+                                        line.To = vector2New(root2dPos.X, root2dPos.Y)
+                                    end 
+
+                                    line.Visible = (isFFA or localPlayer.Team ~= player.Team) and onScreen
+
+                                    if espColor then 
+                                        line.Color = espColor
+                                    end 
+
+
+                                else 
+                                    line.Visible = false 
+                                end 
+                            else 
+                                line.Visible = false
+                            end
+                            
+                        else 
+                            line.Visible = false
+                        end 
+                    end 
+                end)
+            else 
+                if linesPlayerAddedEv then linesPlayerAddedEv:Disconnect(); linesPlayerAddedEv = nil end 
+                if linesPlayerRemovingEv then linesPlayerRemovingEv:Disconnect(); linesPlayerRemovingEv = nil end 
+                if updateLineEsp then updateLineEsp:Disconnect(); updateLineEsp = nil end 
+
+                for i, v in next, Players:GetPlayers() do 
+                    removePlayerDrawingCache("Line", v)
                 end 
             end 
         end 
@@ -968,43 +1146,52 @@ if game.PlaceId == supportedGames["Weaponry"] then
                             local head = character:FindFirstChild("Head") 
                             local humanoid = character:FindFirstChild("Humanoid")
  
+                            
                             if head and humanoid then 
-                                local headPos, onScreen = wtvp(camera, head.Position)
-                                local origin, size = character:GetBoundingBox()
-                                local height = (camera.CFrame - camera.CFrame.Position) * vector3New(0, math.clamp(size.Y, 1, 10) / 2, 0)
+                                --> Dimensions is the object's size/volume in a sense x, y, z 
+                                local centerObjectCFrame, dimensionOfObject = character:GetBoundingBox() 
+                                local topOfObject = camera:WorldToViewportPoint(centerObjectCFrame.Position + Vector3.new(0, dimensionOfObject.Y / 2, 0 )) 
 
-                                local bottom = wtvp(camera, origin.Position - height)
-                                local top = wtvp(camera, origin.Position + height)
-                                local newHeight = -math.abs(top.Y - bottom.Y)
+                                local bottomOfObject = camera:WorldToViewportPoint(centerObjectCFrame.Position + Vector3.new(0, -dimensionOfObject.Y / 2)) 
+                                local heightOfObject = topOfObject.Y - bottomOfObject.Y 
 
-                                local newSize = vector2New(newHeight / 1.5, newHeight)           
-                                local healthBarWidth = 10
-                                local healthBarHeight = newSize.Y * (humanoid.Health / humanoid.MaxHealth)
+                                --> So the height of the health bar is relative to the player's health 
+                                local healthBarHeight = heightOfObject * humanoid.Health / humanoid.MaxHealth
 
-                                local healthBarX = (headPos.X - newSize.X / 2) + newSize.X - 10
-                                local healthBarY = (headPos.Y - newSize.Y / 1.2)
-                                local healthBarFraction = humanoid.Health / humanoid.MaxHealth
+                                local widthOfObject = heightOfObject / 1.2 --> Dividing by 1.5 because we want it to be a rectangle and this provides a good height to width ratio
+                                local headPos, onScreen = camera:WorldToViewportPoint(head.Position) 
 
                                 if onScreen and humanoid.Health > 0 then 
-                                    healthBarOutline.From = vector2New(healthBarX, healthBarY)
-                                    healthBarOutline.To = vector2New(healthBarX, healthBarY + newSize.Y)
-                                    healthBarOutline.Visible = (isFFA or localPlayer.Team ~= player.Team) and onScreen
-                                    healthBarOutline.ZIndex = 1 
+                                    --> The X coord represents the width because width is essentially left or right 
+                                    --> The Y coord represent the height because height is essentially up or down 
 
-                                    healthBar.From = vector2New(healthBarX, healthBarY)
-                                    healthBar.To = vector2New(healthBarX, healthBarY + healthBarHeight)
-                                    healthBar.Color = Color3.new(1, 0, 0):Lerp(Color3.new(0, 1, 0), healthBarFraction)
-                                    healthBar.Visible = (isFFA or localPlayer.Team ~= player.Team) and onScreen and healthBarOutline.Visible
-                                    healthBar.ZIndex = 2 
+                                    local boxOutlineSize = Vector2.new(widthOfObject, heightOfObject)
+                                    local boxOutlinePosition = Vector2.new(headPos.X - boxOutlineSize.X / 2, headPos.Y - boxOutlineSize.Y / 1.2) 
+
+                                    healthBarOutline.Size = Vector2.new(2, heightOfObject)
+                                    healthBarOutline.Position = Vector2.new(boxOutlinePosition.X + 3, boxOutlinePosition.Y)
+
+                                    healthBar.Size = Vector2.new(1, healthBarHeight)
+
+                                    --> To center the health bar and box within their outlines
+                                    local offsetX = (healthBarOutline.Size.X - healthBar.Size.X) / 2
+
+                                    healthBar.Position = Vector2.new(healthBarOutline.Position.X + offsetX, healthBarOutline.Position.Y )
+                                    healthBar.Color = Color3.new(1, 0, 0):Lerp(Color3.new(0, 1, 0), humanoid.Health / humanoid.MaxHealth)
+
+                                    
+                                    healthBarOutline.Visible = (isFFA or localPlayer.Team ~= player.Team) and onScreen
+                                    healthBar.Visible = (isFFA or localPlayer.Team ~= player.Team) and onScreen
 
                                 else 
-                                    healthBar.Visible = false
+  
                                     healthBarOutline.Visible = false 
+                                    healthBar.Visible = false 
                                 end 
 
                             else 
-                                healthBar.Visible = false
                                 healthBarOutline.Visible = false 
+                                healthBar.Visible = false 
                             end 
 
                         else 
@@ -1217,8 +1404,9 @@ elseif game.PlaceId == supportedGames["War Tycoon"] then
             end 
         end 
     })
-    local EspColor = EspSection:AddColorpicker({ Name = "Player ESP Color", Flag = "Player ESP Color", Callback = function(v) getgenv().espColor = v end }) 
-    local BoxESP = EspSection:CreateToggle({ Name = "Box ESP", CurrentValue = false, Flag = "Box ESP [Weaponry]", 
+    
+    local EspColor = EspSection:AddColorpicker({ Name = "Player ESP Color", Flag = "Player ESP Color", Callback = function(v) espColor = v; print(espColor) end }) 
+    local BoxESP = EspSection:CreateToggle({ Name = "Box ESP", CurrentValue = false, Flag = "Box ESP [War Tycoon]", 
         Callback = function(v)
             if v then 
                 for i, v in next, Players:GetPlayers() do 
@@ -1245,26 +1433,32 @@ elseif game.PlaceId == supportedGames["War Tycoon"] then
 
                             if head and humanoid then 
                                 local headPos, onScreen = wtvp(camera, head.Position)
-                                local origin, size = character:GetBoundingBox()
-                                local height = (camera.CFrame - camera.CFrame.Position) * vector3New(0, math.clamp(size.Y, 1, 10) / 2, 0)
+                
+                                --> Dimensions is the object's size/volume in a sense x, y, z 
+                                local centerObjectCFrame, dimensionOfObject = character:GetBoundingBox() 
 
-                                local bottom = wtvp(camera, origin.Position - height)
-                                local top = wtvp(camera, origin.Position + height)
-                                local newHeight = -math.abs(top.Y - bottom.Y)
-
-                                local newSize = vector2New(newHeight / 1.5, newHeight)
+                                --> Since the the center's position is the midpoint from any edge of the cube we add the original position to size of the cube's axis / 2 to get the side lines position
+                                local topOfObject = camera:WorldToViewportPoint(centerObjectCFrame.Position + vector3New(0, dimensionOfObject.Y / 2, 0 )) 
+                                local bottomOfObject = camera:WorldToViewportPoint(centerObjectCFrame.Position + vector3New(0, -dimensionOfObject.Y / 2)) 
+                                local heightOfObject = topOfObject.Y - bottomOfObject.Y 
+                
+                                --> So the height of the health bar is relative to the player's health 
+                                local healthBarHeight = heightOfObject * humanoid.Health / humanoid.MaxHealth
+                
+                                local widthOfObject = heightOfObject / 1.2 --> Dividing by 1.5 because we want it to be a rectangle and this provides a good height to width ratio
+                                local headPos, onScreen = camera:WorldToViewportPoint(head.Position) 
                     
                                 if onScreen and humanoid.Health > 0 then 
-                                    box.Size = newSize
-                                    box.Position = vector2New(headPos.X - newSize.X / 2, headPos.Y - newSize.Y / 1.2)
-
-                                    boxOutline.Size = box.Size 
-                                    boxOutline.Position = box.Position
-                                    
+                                    boxOutline.Size = Vector2.new(widthOfObject, heightOfObject)
+                                    boxOutline.Position = Vector2.new(headPos.X - boxOutline.Size.X / 2, headPos.Y - boxOutline.Size.Y / 1.2) 
                                     boxOutline.Visible = (isFFA or localPlayer.Team ~= player.Team) and onScreen
+
+                                    box.Size = boxOutline.Size 
+                                    box.Position = boxOutline.Position
                                     box.Visible = boxOutline.Visible
+
                                     if espColor then 
-                                        box.Color = espColor 
+                                        box.Color = espColor
                                     end 
                                 else 
                                     boxOutline.Visible = false 
@@ -1356,7 +1550,7 @@ elseif game.PlaceId == supportedGames["War Tycoon"] then
             end 
         end 
     })
-    local HealthBarESP = EspSection:CreateToggle({ Name = "Health Bar ESP", CurrentValue = false, Flag = "Health Bar ESP [Weaponry]", 
+    local HealthBarESP = EspSection:CreateToggle({ Name = "Health Bar ESP", CurrentValue = false, Flag = "Health Bar ESP [War Tycoon]", 
         Callback = function(v)
             if v then 
                 for i, v in next, Players:GetPlayers() do 
@@ -1380,42 +1574,50 @@ elseif game.PlaceId == supportedGames["War Tycoon"] then
                             local humanoid = character:FindFirstChild("Humanoid")
  
                             if head and humanoid then 
-                                local headPos, onScreen = wtvp(camera, head.Position)
-                                local origin, size = character:GetBoundingBox()
-                                local height = (camera.CFrame - camera.CFrame.Position) * vector3New(0, math.clamp(size.Y, 1, 10) / 2, 0)
+                                --> Dimensions is the object's size/volume in a sense x, y, z 
+                                local centerObjectCFrame, dimensionOfObject = character:GetBoundingBox() 
+                                local topOfObject = camera:WorldToViewportPoint(centerObjectCFrame.Position + Vector3.new(0, dimensionOfObject.Y / 2, 0 )) 
 
-                                local bottom = wtvp(camera, origin.Position - height)
-                                local top = wtvp(camera, origin.Position + height)
-                                local newHeight = -math.abs(top.Y - bottom.Y)
+                                local bottomOfObject = camera:WorldToViewportPoint(centerObjectCFrame.Position + Vector3.new(0, -dimensionOfObject.Y / 2)) 
+                                local heightOfObject = topOfObject.Y - bottomOfObject.Y 
 
-                                local newSize = vector2New(newHeight / 1.5, newHeight)           
-                                local healthBarWidth = 10
-                                local healthBarHeight = newSize.Y * (humanoid.Health / humanoid.MaxHealth)
+                                --> So the height of the health bar is relative to the player's health 
+                                local healthBarHeight = heightOfObject * humanoid.Health / humanoid.MaxHealth
 
-                                local healthBarX = (headPos.X - newSize.X / 2) + newSize.X - 10
-                                local healthBarY = (headPos.Y - newSize.Y / 1.2)
-                                local healthBarFraction = humanoid.Health / humanoid.MaxHealth
+                                local widthOfObject = heightOfObject / 1.2 --> Dividing by 1.5 because we want it to be a rectangle and this provides a good height to width ratio
+                                local headPos, onScreen = camera:WorldToViewportPoint(head.Position) 
 
                                 if onScreen and humanoid.Health > 0 then 
-                                    healthBarOutline.From = vector2New(healthBarX, healthBarY)
-                                    healthBarOutline.To = vector2New(healthBarX, healthBarY + newSize.Y)
-                                    healthBarOutline.Visible = (isFFA or localPlayer.Team ~= player.Team) and onScreen
-                                    healthBarOutline.ZIndex = 1 
+                                    --> The X coord represents the width because width is essentially left or right 
+                                    --> The Y coord represent the height because height is essentially up or down 
 
-                                    healthBar.From = vector2New(healthBarX, healthBarY)
-                                    healthBar.To = vector2New(healthBarX, healthBarY + healthBarHeight)
-                                    healthBar.Color = Color3.new(1, 0, 0):Lerp(Color3.new(0, 1, 0), healthBarFraction)
-                                    healthBar.Visible = (isFFA or localPlayer.Team ~= player.Team) and onScreen and healthBarOutline.Visible
-                                    healthBar.ZIndex = 2 
+                                    local boxOutlineSize = Vector2.new(widthOfObject, heightOfObject)
+                                    local boxOutlinePosition = Vector2.new(headPos.X - boxOutlineSize.X / 2, headPos.Y - boxOutlineSize.Y / 1.2) 
+
+                                    healthBarOutline.Size = Vector2.new(2, heightOfObject)
+                                    healthBarOutline.Position = Vector2.new(boxOutlinePosition.X + 3, boxOutlinePosition.Y)
+
+                                    healthBar.Size = Vector2.new(1, healthBarHeight)
+
+                                    --> To center the health bar and box within their outlines
+                                    local offsetX = (healthBarOutline.Size.X - healthBar.Size.X) / 2
+
+                                    healthBar.Position = Vector2.new(healthBarOutline.Position.X + offsetX, healthBarOutline.Position.Y )
+                                    healthBar.Color = Color3.new(1, 0, 0):Lerp(Color3.new(0, 1, 0), humanoid.Health / humanoid.MaxHealth)
+
+                                    
+                                    healthBarOutline.Visible = (isFFA or localPlayer.Team ~= player.Team) and onScreen
+                                    healthBar.Visible = (isFFA or localPlayer.Team ~= player.Team) and onScreen
 
                                 else 
-                                    healthBar.Visible = false
+  
                                     healthBarOutline.Visible = false 
+                                    healthBar.Visible = false 
                                 end 
 
                             else 
-                                healthBar.Visible = false
                                 healthBarOutline.Visible = false 
+                                healthBar.Visible = false 
                             end 
 
                         else 
@@ -1664,23 +1866,28 @@ elseif game.PlaceId == supportedGames["MVSD"]["Default Server"] or game.PlaceId 
 
                             if head and humanoid then 
                                 local headPos, onScreen = wtvp(camera, head.Position)
-                                local origin, size = character:GetBoundingBox()
-                                local height = (camera.CFrame - camera.CFrame.Position) * vector3New(0, math.clamp(size.Y, 1, 10) / 2, 0)
+                
+                                --> Dimensions is the object's size/volume in a sense x, y, z 
+                                local centerObjectCFrame, dimensionOfObject = character:GetBoundingBox() 
 
-                                local bottom = wtvp(camera, origin.Position - height)
-                                local top = wtvp(camera, origin.Position + height)
-                                local newHeight = -math.abs(top.Y - bottom.Y)
-
-                                local newSize = vector2New(newHeight / 1.5, newHeight)
+                                --> Since the the center's position is the midpoint from any edge of the cube we add the original position to size of the cube's axis / 2 to get the side lines position
+                                local topOfObject = camera:WorldToViewportPoint(centerObjectCFrame.Position + vector3New(0, dimensionOfObject.Y / 2, 0 )) 
+                                local bottomOfObject = camera:WorldToViewportPoint(centerObjectCFrame.Position + vector3New(0, -dimensionOfObject.Y / 2)) 
+                                local heightOfObject = topOfObject.Y - bottomOfObject.Y 
+                
+                                --> So the height of the health bar is relative to the player's health 
+                                local healthBarHeight = heightOfObject * humanoid.Health / humanoid.MaxHealth
+                
+                                local widthOfObject = heightOfObject / 1.2 --> Dividing by 1.5 because we want it to be a rectangle and this provides a good height to width ratio
+                                local headPos, onScreen = camera:WorldToViewportPoint(head.Position) 
                     
                                 if onScreen and humanoid.Health > 0 then 
-                                    box.Size = newSize
-                                    box.Position = vector2New(headPos.X - newSize.X / 2, headPos.Y - newSize.Y / 1.2)
-
-                                    boxOutline.Size = box.Size 
-                                    boxOutline.Position = box.Position
-                                    
+                                    boxOutline.Size = Vector2.new(widthOfObject, heightOfObject)
+                                    boxOutline.Position = Vector2.new(headPos.X - boxOutline.Size.X / 2, headPos.Y - boxOutline.Size.Y / 1.2) 
                                     boxOutline.Visible = (isFFA or localPlayer.Team ~= player.Team) and onScreen
+
+                                    box.Size = boxOutline.Size 
+                                    box.Position = boxOutline.Position
                                     box.Visible = boxOutline.Visible
 
                                     if espColor then 
@@ -1695,6 +1902,7 @@ elseif game.PlaceId == supportedGames["MVSD"]["Default Server"] or game.PlaceId 
                                 boxOutline.Visible = false 
                                 box.Visible = false
                             end 
+
 
                         else 
                             boxOutline.Visible = false 
@@ -1800,42 +2008,50 @@ elseif game.PlaceId == supportedGames["MVSD"]["Default Server"] or game.PlaceId 
                             local humanoid = character:FindFirstChild("Humanoid")
 
                             if head and humanoid then 
-                                local headPos, onScreen = wtvp(camera, head.Position)
-                                local origin, size = character:GetBoundingBox()
-                                local height = (camera.CFrame - camera.CFrame.Position) * vector3New(0, math.clamp(size.Y, 1, 10) / 2, 0)
+                                --> Dimensions is the object's size/volume in a sense x, y, z 
+                                local centerObjectCFrame, dimensionOfObject = character:GetBoundingBox() 
+                                local topOfObject = camera:WorldToViewportPoint(centerObjectCFrame.Position + Vector3.new(0, dimensionOfObject.Y / 2, 0 )) 
 
-                                local bottom = wtvp(camera, origin.Position - height)
-                                local top = wtvp(camera, origin.Position + height)
-                                local newHeight = -math.abs(top.Y - bottom.Y)
+                                local bottomOfObject = camera:WorldToViewportPoint(centerObjectCFrame.Position + Vector3.new(0, -dimensionOfObject.Y / 2)) 
+                                local heightOfObject = topOfObject.Y - bottomOfObject.Y 
 
-                                local newSize = vector2New(newHeight / 1.5, newHeight)           
-                                local healthBarWidth = 10
-                                local healthBarHeight = newSize.Y * (humanoid.Health / humanoid.MaxHealth)
+                                --> So the height of the health bar is relative to the player's health 
+                                local healthBarHeight = heightOfObject * humanoid.Health / humanoid.MaxHealth
 
-                                local healthBarX = (headPos.X - newSize.X / 2) + newSize.X - 10
-                                local healthBarY = (headPos.Y - newSize.Y / 1.2)
-                                local healthBarFraction = humanoid.Health / humanoid.MaxHealth
+                                local widthOfObject = heightOfObject / 1.2 --> Dividing by 1.5 because we want it to be a rectangle and this provides a good height to width ratio
+                                local headPos, onScreen = camera:WorldToViewportPoint(head.Position) 
 
                                 if onScreen and humanoid.Health > 0 then 
-                                    healthBarOutline.From = vector2New(healthBarX, healthBarY)
-                                    healthBarOutline.To = vector2New(healthBarX, healthBarY + newSize.Y)
-                                    healthBarOutline.Visible = (isFFA or localPlayer.Team ~= player.Team) and onScreen
-                                    healthBarOutline.ZIndex = 1 
+                                    --> The X coord represents the width because width is essentially left or right 
+                                    --> The Y coord represent the height because height is essentially up or down 
 
-                                    healthBar.From = vector2New(healthBarX, healthBarY)
-                                    healthBar.To = vector2New(healthBarX, healthBarY + healthBarHeight)
-                                    healthBar.Color = Color3.new(1, 0, 0):Lerp(Color3.new(0, 1, 0), healthBarFraction)
-                                    healthBar.Visible = (isFFA or localPlayer.Team ~= player.Team) and onScreen and healthBarOutline.Visible
-                                    healthBar.ZIndex = 2 
+                                    local boxOutlineSize = Vector2.new(widthOfObject, heightOfObject)
+                                    local boxOutlinePosition = Vector2.new(headPos.X - boxOutlineSize.X / 2, headPos.Y - boxOutlineSize.Y / 1.2) 
+
+                                    healthBarOutline.Size = Vector2.new(2, heightOfObject)
+                                    healthBarOutline.Position = Vector2.new(boxOutlinePosition.X + 3, boxOutlinePosition.Y)
+
+                                    healthBar.Size = Vector2.new(1, healthBarHeight)
+
+                                    --> To center the health bar and box within their outlines
+                                    local offsetX = (healthBarOutline.Size.X - healthBar.Size.X) / 2
+
+                                    healthBar.Position = Vector2.new(healthBarOutline.Position.X + offsetX, healthBarOutline.Position.Y )
+                                    healthBar.Color = Color3.new(1, 0, 0):Lerp(Color3.new(0, 1, 0), humanoid.Health / humanoid.MaxHealth)
+
+                                    
+                                    healthBarOutline.Visible = (isFFA or localPlayer.Team ~= player.Team) and onScreen 
+                                    healthBar.Visible = (isFFA or localPlayer.Team ~= player.Team) and onScreen
 
                                 else 
-                                    healthBar.Visible = false
+  
                                     healthBarOutline.Visible = false 
+                                    healthBar.Visible = false 
                                 end 
 
                             else 
-                                healthBar.Visible = false
                                 healthBarOutline.Visible = false 
+                                healthBar.Visible = false 
                             end 
 
                         else 
@@ -2630,7 +2846,7 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
 
     local PlayerESPRange = EspSection:AddSlider({ Name = "Player ESP Range", Flag = "Player ESP Range Slider", Value = 1000, Min = 1000, Max = 25000, Callback = function(v) playerEspRange = v end })
     uiEssentials.EspColor = EspSection:AddColorpicker({ Name = "Player ESP Color", Flag = "Player ESP Color", Callback = function(v) getgenv().espColor = v end }) 
-    local BoxESP = EspSection:CreateToggle({ Name = "Box ESP", CurrentValue = false, Flag = "Box ESP [Weaponry]", 
+    local BoxESP = EspSection:CreateToggle({ Name = "Box ESP", CurrentValue = false, Flag = "Box ESP [Arcane Odyssey]", 
         Callback = function(v)
             if v then 
                 for i, v in next, Players:GetPlayers() do 
@@ -2657,24 +2873,30 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
 
                             if head and humanoid then 
                                 local headPos, onScreen = wtvp(camera, head.Position)
-                                local origin, size = character:GetBoundingBox()
-                                local height = (camera.CFrame - camera.CFrame.Position) * vector3New(0, math.clamp(size.Y, 1, 10) / 2, 0)
+                
+                                --> Dimensions is the object's size/volume in a sense x, y, z 
+                                local centerObjectCFrame, dimensionOfObject = character:GetBoundingBox() 
 
-                                local bottom = wtvp(camera, origin.Position - height)
-                                local top = wtvp(camera, origin.Position + height)
-                                local newHeight = -math.abs(top.Y - bottom.Y)
-
-                                local newSize = vector2New(newHeight / 1.5, newHeight)
+                                --> Since the the center's position is the midpoint from any edge of the cube we add the original position to size of the cube's axis / 2 to get the side lines position
+                                local topOfObject = camera:WorldToViewportPoint(centerObjectCFrame.Position + vector3New(0, dimensionOfObject.Y / 2, 0 )) 
+                                local bottomOfObject = camera:WorldToViewportPoint(centerObjectCFrame.Position + vector3New(0, -dimensionOfObject.Y / 2)) 
+                                local heightOfObject = topOfObject.Y - bottomOfObject.Y 
+                
+                                --> So the height of the health bar is relative to the player's health 
+                                local healthBarHeight = heightOfObject * humanoid.Health / humanoid.MaxHealth
+                
+                                local widthOfObject = heightOfObject / 1.2 --> Dividing by 1.5 because we want it to be a rectangle and this provides a good height to width ratio
+                                local headPos, onScreen = camera:WorldToViewportPoint(head.Position) 
                     
-                                if onScreen and humanoid.Health > 0 and localPlayer:DistanceFromCharacter(head.Position) < playerEspRange then 
-                                    box.Size = newSize
-                                    box.Position = vector2New(headPos.X - newSize.X / 2, headPos.Y - newSize.Y / 1.2)
-
-                                    boxOutline.Size = box.Size 
-                                    boxOutline.Position = box.Position
-                                    
+                                if onScreen and humanoid.Health > 0 then 
+                                    boxOutline.Size = Vector2.new(widthOfObject, heightOfObject)
+                                    boxOutline.Position = Vector2.new(headPos.X - boxOutline.Size.X / 2, headPos.Y - boxOutline.Size.Y / 1.2) 
                                     boxOutline.Visible = (isFFA or localPlayer.Team ~= player.Team) and onScreen
+
+                                    box.Size = boxOutline.Size 
+                                    box.Position = boxOutline.Position
                                     box.Visible = boxOutline.Visible
+
                                     if espColor then 
                                         box.Color = espColor
                                     end 
@@ -2806,42 +3028,50 @@ elseif game.PlaceId == supportedGames["Arcane Odyssey"]["Bronze Sea"] or game.Pl
                             local humanoid = character:FindFirstChild("Humanoid")
  
                             if head and humanoid then 
-                                local headPos, onScreen = wtvp(camera, head.Position)
-                                local origin, size = character:GetBoundingBox()
-                                local height = (camera.CFrame - camera.CFrame.Position) * vector3New(0, math.clamp(size.Y, 1, 10) / 2, 0)
+                                --> Dimensions is the object's size/volume in a sense x, y, z 
+                                local centerObjectCFrame, dimensionOfObject = character:GetBoundingBox() 
+                                local topOfObject = camera:WorldToViewportPoint(centerObjectCFrame.Position + Vector3.new(0, dimensionOfObject.Y / 2, 0 )) 
 
-                                local bottom = wtvp(camera, origin.Position - height)
-                                local top = wtvp(camera, origin.Position + height)
-                                local newHeight = -math.abs(top.Y - bottom.Y)
+                                local bottomOfObject = camera:WorldToViewportPoint(centerObjectCFrame.Position + Vector3.new(0, -dimensionOfObject.Y / 2)) 
+                                local heightOfObject = topOfObject.Y - bottomOfObject.Y 
 
-                                local newSize = vector2New(newHeight / 1.5, newHeight)           
-                                local healthBarWidth = 10
-                                local healthBarHeight = newSize.Y * (humanoid.Health / humanoid.MaxHealth)
+                                --> So the height of the health bar is relative to the player's health 
+                                local healthBarHeight = heightOfObject * humanoid.Health / humanoid.MaxHealth
 
-                                local healthBarX = (headPos.X - newSize.X / 2) + newSize.X - 10
-                                local healthBarY = (headPos.Y - newSize.Y / 1.2)
-                                local healthBarFraction = humanoid.Health / humanoid.MaxHealth
+                                local widthOfObject = heightOfObject / 1.2 --> Dividing by 1.5 because we want it to be a rectangle and this provides a good height to width ratio
+                                local headPos, onScreen = camera:WorldToViewportPoint(head.Position) 
 
-                                if onScreen and humanoid.Health > 0 and localPlayer:DistanceFromCharacter(head.Position) < playerEspRange then 
-                                    healthBarOutline.From = vector2New(healthBarX, healthBarY)
-                                    healthBarOutline.To = vector2New(healthBarX, healthBarY + newSize.Y)
-                                    healthBarOutline.Visible = (isFFA or localPlayer.Team ~= player.Team) and onScreen
-                                    healthBarOutline.ZIndex = 1 
+                                if onScreen and humanoid.Health > 0 then 
+                                    --> The X coord represents the width because width is essentially left or right 
+                                    --> The Y coord represent the height because height is essentially up or down 
 
-                                    healthBar.From = vector2New(healthBarX, healthBarY)
-                                    healthBar.To = vector2New(healthBarX, healthBarY + healthBarHeight)
-                                    healthBar.Color = Color3.new(1, 0, 0):Lerp(Color3.new(0, 1, 0), healthBarFraction)
-                                    healthBar.Visible = (isFFA or localPlayer.Team ~= player.Team) and onScreen and healthBarOutline.Visible
-                                    healthBar.ZIndex = 2 
+                                    local boxOutlineSize = Vector2.new(widthOfObject, heightOfObject)
+                                    local boxOutlinePosition = Vector2.new(headPos.X - boxOutlineSize.X / 2, headPos.Y - boxOutlineSize.Y / 1.2) 
+
+                                    healthBarOutline.Size = Vector2.new(2, heightOfObject)
+                                    healthBarOutline.Position = Vector2.new(boxOutlinePosition.X + 3, boxOutlinePosition.Y)
+
+                                    healthBar.Size = Vector2.new(1, healthBarHeight)
+
+                                    --> To center the health bar and box within their outlines
+                                    local offsetX = (healthBarOutline.Size.X - healthBar.Size.X) / 2
+
+                                    healthBar.Position = Vector2.new(healthBarOutline.Position.X + offsetX, healthBarOutline.Position.Y )
+                                    healthBar.Color = Color3.new(1, 0, 0):Lerp(Color3.new(0, 1, 0), humanoid.Health / humanoid.MaxHealth)
+
+                                    
+                                    healthBarOutline.Visible = (isFFA or localPlayer.Team ~= player.Team) and onScreen 
+                                    healthBar.Visible = (isFFA or localPlayer.Team ~= player.Team) and onScreen 
 
                                 else 
-                                    healthBar.Visible = false
+  
                                     healthBarOutline.Visible = false 
+                                    healthBar.Visible = false 
                                 end 
 
                             else 
-                                healthBar.Visible = false
                                 healthBarOutline.Visible = false 
+                                healthBar.Visible = false 
                             end 
 
                         else 

@@ -1,3 +1,4 @@
+-- ts is so ass idk why i made it ill probalby update it later
 local ESP = {}
 local round = math.floor 
 

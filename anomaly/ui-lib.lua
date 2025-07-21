@@ -1,8 +1,36 @@
 local Library = {}
-Library.Tabs = {}
-
+local HttpService = game:GetService("HttpService")
 local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
+Library.Tabs = {}
+
+local state = {}
+local saveFolder = "Anomaly"
+local saveFile = saveFolder .. "/Data.json"
+
+local function loadState()
+    if isfile(saveFile) then
+        state = HttpService:JSONDecode(readfile(saveFile))
+    end
+end
+
+local function saveState()
+    if not isfolder or not makefolder or not writefile then return end 
+    if not isfolder(saveFolder) then
+        makefolder(saveFolder)
+    end
+
+    writefile(saveFile, HttpService:JSONEncode(state))
+end
+
+local function loadState()
+    if not isfile or not readfile then return end 
+    if isfile(saveFile) then
+        state = HttpService:JSONDecode(readfile(saveFile))
+    end
+end
+
+loadState()
 
 local RED = Color3.fromRGB(255, 0, 0)
 local DARK_GREY = Color3.fromRGB(33, 33, 33)
@@ -242,6 +270,7 @@ function Library:CreateTab(window, tabName)
     end
 
     function TabObject:CreateToggle(toggleName, callback)
+        local toggled = state[toggleName] or false
         local TextLabel = Instance.new("TextLabel")
         TextLabel.Parent = NewTab
         TextLabel.BackgroundColor3 = DARK_GREY
@@ -263,9 +292,12 @@ function Library:CreateTab(window, tabName)
         NewToggle.TextColor3 = BLACK
         NewToggle.TextSize = 14
 
-        local toggled = false
+
         NewToggle.MouseButton1Click:Connect(function()
             toggled = not toggled
+
+            state[toggleName] = toggled
+            saveState()
             NewToggle.BackgroundColor3 = toggled and GREEN or RED
             callback(toggled)
         end)
@@ -274,6 +306,7 @@ function Library:CreateTab(window, tabName)
     end
 
     function TabObject:CreateDropdown(dropdownName, dropdownItems, callback)
+        local selected = state[dropdownName] or dropdownItems[1]
         local DropdownLabel = Instance.new("TextLabel")
         DropdownLabel.Name = dropdownName
         DropdownLabel.Parent = NewTab
@@ -359,6 +392,9 @@ function Library:CreateTab(window, tabName)
 
             actualDropdownBtn.MouseButton1Click:Connect(function()
                 DropdownLabel.Text = dropdownName .. "\n Value: " .. v
+                selected = v
+                state[dropdownName] = selected
+                saveState()
                 DropdownFrame.Visible = false
                 DropdownFilterBtn.Text = "V"
                 callback(v)

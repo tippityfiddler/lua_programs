@@ -136,16 +136,15 @@ function Library:CreateWindow(name : string)
 	UIPadding_4.PaddingLeft = UDim.new(0, 2)
 	UIPadding_4.PaddingRight = UDim.new(0, 2)
 	UIPadding_4.PaddingTop = UDim.new(0, 5)
-	
-	self.Main = Main 
-	self.MainBackground = MainBackground
-	return Main 
+
+
+	return self.MainBackground 
 end
 
 
-function Library:CreateTab(tabName : string)
-	local TabBtnsFolder = self.MainBackground.TabBtns.TabScroll 
-	local TabsHolderFolder = self.MainBackground.TabsHolder 
+function Library:CreateTab(window : Instance, tabName : string)
+	local TabBtnsFolder = window.TabBtns.TabScroll 
+	local TabsHolderFolder = window.MainBackground.TabsHolder 
 	
 	local NewTabBtn = Instance.new("TextButton", TabBtnsFolder)
 	local NewTab = Instance.new("ScrollingFrame", TabsHolderFolder)

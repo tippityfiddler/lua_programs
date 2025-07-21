@@ -138,7 +138,7 @@ function Library:CreateWindow(name : string)
 	UIPadding_4.PaddingTop = UDim.new(0, 5)
 
 
-	return self.MainBackground 
+	return MainBackground 
 end
 
 

@@ -145,10 +145,10 @@ end
 function Library:CreateTab(window : Instance, tabName : string)
 	local TabBtnsFolder = window.TabBtns.TabScroll 
 	local TabsHolderFolder = window.TabsHolder 
-	
+
 	local NewTabBtn = Instance.new("TextButton", TabBtnsFolder)
 	local NewTab = Instance.new("ScrollingFrame", TabsHolderFolder)
-	
+
 	NewTab.Name = tabName
 	NewTab.Active = true
 	NewTab.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
@@ -158,37 +158,36 @@ function Library:CreateTab(window : Instance, tabName : string)
 	NewTab.Size = UDim2.new(0, 285, 0, 276)
 	NewTab.ScrollBarThickness = 0
 	NewTab.Visible = false
-	
+
 	NewTabBtn.BackgroundColor3 = Color3.fromRGB(33, 33, 33)
+	NewTabBtn.Text = tabName
 	NewTabBtn.BorderColor3 = Color3.fromRGB(0, 0, 0)
 	NewTabBtn.BorderSizePixel = 0
 	NewTabBtn.Size = UDim2.new(0, 107, 0, 22)
 	NewTabBtn.Font = Enum.Font.Ubuntu
 	NewTabBtn.TextColor3 = Color3.fromRGB(255, 0, 0)
 	NewTabBtn.TextSize = 14.000
-	
-	
+
+
 	self.Tabs[tabName] = {
 		TabBtn = NewTabBtn,
 		TabFrame = NewTab,
 	}
-	
+
 	if #self.Tabs == 1 then
 		NewTab.Visible = true
-		NewTabBtn.BackgroundColor3 = Color3.fromRGB(60, 0, 0)
 	end
 
-	
+
 	NewTabBtn.MouseButton1Click:Connect(function()
 		for _, t in pairs(self.Tabs) do
 			t.TabFrame.Visible = false
 			t.TabBtn.BackgroundColor3 = Color3.fromRGB(33, 33, 33)
 		end
-		
+
 		NewTab.Visible = true
-		NewTabBtn.BackgroundColor3 = Color3.fromRGB(60, 0, 0) 
 	end)
-	
+
 	return NewTab
 end
 
@@ -198,7 +197,7 @@ function Library:CreateButton(tabName : string, btnName : string, callback : fun
 		warn("Tab '" .. tabName .. "' does not exist!")
 		return
 	end
-	
+
 	local NewBtn = Instance.new("TextButton", tab.TabFrame)
 	NewBtn.BackgroundColor3 = Color3.fromRGB(33, 33, 33)
 	NewBtn.BorderColor3 = Color3.fromRGB(0, 0, 0)
@@ -208,9 +207,9 @@ function Library:CreateButton(tabName : string, btnName : string, callback : fun
 	NewBtn.TextColor3 = Color3.fromRGB(255, 0, 0)
 	NewBtn.TextSize = 14.000
 	NewBtn.Text = btnName 
-	
+
 	NewBtn.MouseButton1Click:Connect(callback) 
-	
+
 	return NewBtn
 end
 return Library

@@ -23,13 +23,6 @@ local function saveState()
     writefile(saveFile, HttpService:JSONEncode(state))
 end
 
-local function loadState()
-    if not isfile or not readfile then return end 
-    if isfile(saveFile) then
-        state = HttpService:JSONDecode(readfile(saveFile))
-    end
-end
-
 loadState()
 
 local RED = Color3.fromRGB(255, 0, 0)
@@ -292,6 +285,10 @@ function Library:CreateTab(window, tabName)
         NewToggle.TextColor3 = BLACK
         NewToggle.TextSize = 14
 
+        if state[toggleName] then 
+            callback(state[toggleName])
+            NewToggle.BackgroundColor3 = GREEN
+        end 
 
         NewToggle.MouseButton1Click:Connect(function()
             toggled = not toggled
@@ -390,6 +387,11 @@ function Library:CreateTab(window, tabName)
             actualDropdownBtn.Text = v
             actualDropdownBtn.ZIndex = 23 + i
 
+            if state[dropdownName] then 
+                callback(state[dropdownName])
+                DropdownLabel.Text = dropdownName .. "\nValue: " .. state[dropdownName]
+            end 
+
             actualDropdownBtn.MouseButton1Click:Connect(function()
                 DropdownLabel.Text = dropdownName .. "\n Value: " .. v
                 selected = v
@@ -403,6 +405,8 @@ function Library:CreateTab(window, tabName)
 
         return DropdownBtnContainer
     end
+
+
 
     TabObject.Frame = NewTab
     return TabObject

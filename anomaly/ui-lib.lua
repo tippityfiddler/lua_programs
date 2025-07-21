@@ -23,7 +23,7 @@ function Library:CreateWindow(name : string)
 	local UIPadding_4 = Instance.new("UIPadding")
 
 	Main.Name = "Main"
-	Main.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+	Main.Parent = game:GetService("CoreGui")
 	Main.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
 	MainBackground.Name = "MainBackground"
@@ -137,6 +137,41 @@ function Library:CreateWindow(name : string)
 	UIPadding_4.PaddingRight = UDim.new(0, 2)
 	UIPadding_4.PaddingTop = UDim.new(0, 5)
 
+	local dragging, dragInput, dragStart, startPos
+	local UserInputService = game:GetService("UserInputService")
+
+	local function update(input)
+		if not dragging then return end
+		local delta = input.Position - dragStart
+		MainBackground.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X,
+			startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+	end
+
+	MainBackground.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			dragging = true
+			dragStart = input.Position
+			startPos = MainBackground.Position
+
+			input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then
+					dragging = false
+				end
+			end)
+		end
+	end)
+
+	MainBackground.InputChanged:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseMovement then
+			dragInput = input
+		end
+	end)
+
+	UserInputService.InputChanged:Connect(function(input)
+		if input == dragInput then
+			update(input)
+		end
+	end)
 
 	return MainBackground 
 end

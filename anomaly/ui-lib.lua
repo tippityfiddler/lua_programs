@@ -144,7 +144,7 @@ end
 
 function Library:CreateTab(window : Instance, tabName : string)
 	local TabBtnsFolder = window.TabBtns.TabScroll 
-	local TabsHolderFolder = window.MainBackground.TabsHolder 
+	local TabsHolderFolder = window.TabsHolder 
 	
 	local NewTabBtn = Instance.new("TextButton", TabBtnsFolder)
 	local NewTab = Instance.new("ScrollingFrame", TabsHolderFolder)

@@ -223,7 +223,6 @@ function Library:CreateTab(window, tabName)
             end
         end
         NewTab.Visible = true
-        NewTabBtn.BackgroundColor3 = RED
     end)
 
     local TabObject = {}

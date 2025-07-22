@@ -31,10 +31,13 @@ local function round(num)
     return math.floor(num)
 end
 
-function ESP:AddBoxESP(player)
-    if boxEspCache[player] then return end
+-- Assume all your existing code above stays the same
 
-    boxEspCache[player] = {
+-- Update AddBoxESP to accept either player or NPC model
+function ESP:AddBoxESP(model)
+    if boxEspCache[model] then return end
+
+    boxEspCache[model] = {
         outline = createDrawing("Square", {
             Visible = false,
             Color = C3(0, 0, 0),
@@ -53,29 +56,28 @@ function ESP:AddBoxESP(player)
     }
 end
 
-function ESP:RemoveBoxESP(player)
-    if not boxEspCache[player] then return end
+function ESP:RemoveBoxESP(model)
+    if not boxEspCache[model] then return end
 
-    boxEspCache[player].outline:Remove()
-    boxEspCache[player].box:Remove()
-    boxEspCache[player] = nil
+    boxEspCache[model].outline:Remove()
+    boxEspCache[model].box:Remove()
+    boxEspCache[model] = nil
 end
 
-local function updateBox(player, cached)
-    local char = player.Character
+local function updateBox(model, cached)
     local isFFA = #Teams:GetChildren() == 0
 
-    if not char then
+    if not model then
         cached.outline.Visible = false
         cached.box.Visible = false
         return
     end
 
-    local head = char:FindFirstChild("Head")
-    local humanoid = char:FindFirstChild("Humanoid")
+    local head = model:FindFirstChild("Head")
+    local humanoid = model:FindFirstChild("Humanoid")
 
     if head and humanoid and humanoid.Health > 0 then
-        local cf = char:GetBoundingBox()
+        local cf = model:GetBoundingBox()
         local top = wtvp(camera, cf.Position + pos)
         local bottom = wtvp(camera, cf.Position - pos)
         local height = top.Y - bottom.Y
@@ -84,14 +86,14 @@ local function updateBox(player, cached)
         local headPos, onScreen = camera:WorldToViewportPoint(head.Position)
 
         if onScreen then
-            local pos = V2(headPos.X - width / 2, headPos.Y - height / 1.2)
+            local pos2d = V2(headPos.X - width / 2, headPos.Y - height / 1.2)
 
             cached.outline.Size = V2(width, height)
-            cached.outline.Position = pos
-            cached.outline.Visible = isFFA or localPlayer.Team ~= player.Team
+            cached.outline.Position = pos2d
+            cached.outline.Visible = isFFA or (model.Parent and model.Parent:IsA("Player")) and localPlayer.Team ~= model.Parent.Team or true
 
             cached.box.Size = cached.outline.Size
-            cached.box.Position = pos
+            cached.box.Position = pos2d
             cached.box.Visible = cached.outline.Visible
 
             if ESP.BoxColor then
@@ -106,37 +108,63 @@ local function updateBox(player, cached)
     cached.box.Visible = false
 end
 
-ESP.BoxColor = nil
-
 function ESP:EnableBoxESP()
+    -- Add box esp to players
     for _, player in ipairs(Players:GetPlayers()) do
         if player ~= localPlayer then
-            self:AddBoxESP(player)
+            self:AddBoxESP(player.Character)
+        end
+    end
+
+    -- Example: Add box esp to NPCs in a folder called "NPCs"
+    local NPCFolder = workspace:FindFirstChild("NPCs")
+    if NPCFolder then
+        for _, npc in ipairs(NPCFolder:GetChildren()) do
+            if npc:IsA("Model") then
+                self:AddBoxESP(npc)
+            end
         end
     end
 
     ESP._playerAdded = Players.PlayerAdded:Connect(function(player)
-        self:AddBoxESP(player)
+        self:AddBoxESP(player.Character)
     end)
+
+    -- Listen for NPCs added dynamically (optional)
+    if NPCFolder then
+        ESP._npcAdded = NPCFolder.ChildAdded:Connect(function(npc)
+            if npc:IsA("Model") then
+                self:AddBoxESP(npc)
+            end
+        end)
+    end
 
     ESP._playerRemoving = Players.PlayerRemoving:Connect(function(player)
-        self:RemoveBoxESP(player)
+        self:RemoveBoxESP(player.Character)
     end)
 
+    if NPCFolder then
+        ESP._npcRemoving = NPCFolder.ChildRemoved:Connect(function(npc)
+            self:RemoveBoxESP(npc)
+        end)
+    end
+
     ESP._update = RunService.RenderStepped:Connect(function()
-        for player, cached in pairs(boxEspCache) do
-            updateBox(player, cached)
+        for model, cached in pairs(boxEspCache) do
+            updateBox(model, cached)
         end
     end)
 end
 
 function ESP:DisableBoxESP()
     if ESP._playerAdded then ESP._playerAdded:Disconnect() end
+    if ESP._npcAdded then ESP._npcAdded:Disconnect() end
     if ESP._playerRemoving then ESP._playerRemoving:Disconnect() end
+    if ESP._npcRemoving then ESP._npcRemoving:Disconnect() end
     if ESP._update then ESP._update:Disconnect() end
 
-    for player, _ in pairs(boxEspCache) do
-        self:RemoveBoxESP(player)
+    for model, _ in pairs(boxEspCache) do
+        self:RemoveBoxESP(model)
     end
 end
 

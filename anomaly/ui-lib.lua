@@ -1,11 +1,6 @@
---> Added Auto-save & Auto-load
---> Added a dropdown feature
---> Added a slider feature
---> Added a toggle feature
---> Added a button feature
-
 local Library = {}
 local HttpService = game:GetService("HttpService")
+local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
 Library.Tabs = {}
@@ -467,9 +462,23 @@ function Library:CreateTab(window, tabName)
             callback(newValue)
         end
 
+        local function startDrag()
+            dragging = true
+            local conn
+            conn = RunService.RenderStepped:Connect(function()
+                if not dragging then
+                    conn:Disconnect()
+                    return
+                end
+                local mouse = UserInputService:GetMouseLocation()
+                updateValueFromPos(mouse.X)
+            end)
+        end
+
+
         SliderBtn.InputBegan:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                dragging = true
+                startDrag()
             end
         end)
 

@@ -27,6 +27,10 @@ local function wtvp(cam, pos)
     return cam:WorldToViewportPoint(pos)
 end
 
+local function round(num)
+    return math.floor(num)
+end
+
 function ESP:AddBoxESP(player)
     if boxEspCache[player] then return end
 

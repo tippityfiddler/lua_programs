@@ -1,3 +1,9 @@
+--> Added Auto-save & Auto-load
+--> Added a dropdown feature
+--> Added a slider feature
+--> Added a toggle feature
+--> Added a button feature
+
 local Library = {}
 local HttpService = game:GetService("HttpService")
 local UserInputService = game:GetService("UserInputService")
@@ -404,6 +410,101 @@ function Library:CreateTab(window, tabName)
         end
 
         return DropdownBtnContainer
+    end
+
+    function TabObject:CreateSlider(sliderName, minValue, maxValue, defaultValue, callback)
+        local savedValue = tonumber(state[sliderName]) or defaultValue
+        state[sliderName] = savedValue
+        saveState()
+
+        local SliderParent = Instance.new("TextLabel")
+        SliderParent.Name = sliderName
+        SliderParent.Parent = NewTab
+        SliderParent.BackgroundColor3 = DARK_GREY
+        SliderParent.BorderSizePixel = 0
+        SliderParent.Size = UDim2.new(0, 265, 0, 60)
+        SliderParent.Font = Enum.Font.Ubuntu
+        SliderParent.Text = sliderName .. ":"
+        SliderParent.TextColor3 = RED
+        SliderParent.TextSize = 14
+
+        local SliderValue = Instance.new("TextBox")
+        SliderValue.Parent = SliderParent
+        SliderValue.BackgroundColor3 = DARK_GREY
+        SliderValue.BorderSizePixel = 0
+        SliderValue.Position = UDim2.new(0.75, 0, 0.25, 0)
+        SliderValue.Size = UDim2.new(0, 60, 0, 30)
+        SliderValue.Font = Enum.Font.Ubuntu
+        SliderValue.Text = tostring(savedValue)
+        SliderValue.TextColor3 = RED
+        SliderValue.TextSize = 14
+
+        local SliderLine = Instance.new("Frame")
+        SliderLine.Parent = SliderParent
+        SliderLine.BackgroundColor3 = GREY_50
+        SliderLine.BorderSizePixel = 0
+        SliderLine.Position = UDim2.new(0.05, 0, 0.75, 0)
+        SliderLine.Size = UDim2.new(0.9, 0, 0, 4)
+
+        local SliderBtn = Instance.new("TextButton")
+        SliderBtn.Parent = SliderLine
+        SliderBtn.BackgroundColor3 = RED
+        SliderBtn.BorderSizePixel = 0
+        SliderBtn.Size = UDim2.new(0, 14, 0, 14)
+        SliderBtn.Position = UDim2.new((savedValue - minValue) / (maxValue - minValue), -7, -0.75, 0)
+        SliderBtn.AutoButtonColor = false
+        SliderBtn.Text = ""
+
+        local dragging = false
+
+        local function updateValueFromPos(x)
+            local relX = math.clamp((x - SliderLine.AbsolutePosition.X) / SliderLine.AbsoluteSize.X, 0, 1)
+            local newValue = math.floor(minValue + (maxValue - minValue) * relX)
+            SliderBtn.Position = UDim2.new(relX, -7, -0.75, 0)
+            SliderValue.Text = tostring(newValue)
+            state[sliderName] = newValue
+            saveState()
+            callback(newValue)
+        end
+
+        SliderBtn.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                dragging = true
+            end
+        end)
+
+        UserInputService.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                dragging = false
+            end
+        end)
+
+        UserInputService.InputChanged:Connect(function(input)
+            if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+                updateValueFromPos(input.Position.X)
+            end
+        end)
+
+        SliderValue.FocusLost:Connect(function()
+            local val = tonumber(SliderValue.Text)
+            if val then
+                val = math.clamp(val, minValue, maxValue)
+                SliderBtn.Position = UDim2.new((val - minValue) / (maxValue - minValue), -7, -0.75, 0)
+                state[sliderName] = val
+                saveState()
+                callback(val)
+            else
+                SliderValue.Text = tostring(state[sliderName])
+            end
+        end)
+
+        if state[sliderName] then 
+            SliderBtn.Position = UDim2.new((state[sliderName] - minValue) / (maxValue - minValue), -7, -0.75, 0)
+            SliderValue.Text = tostring(state[sliderName])
+        end 
+
+        callback(savedValue)
+        return SliderBtn
     end
 
 

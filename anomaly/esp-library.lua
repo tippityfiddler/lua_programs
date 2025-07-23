@@ -8,11 +8,12 @@ local ESP = {}
 local localPlayer = Players.LocalPlayer
 local camera = Workspace.CurrentCamera
 
-local boxEspCache, textEspCache, arrowsCache = {}, {}, {}
+local playerBoxEspCache, textEspCache, arrowsCache = {}, {}, {}
 
 --> Cached Commons: 
 local V3, V2, C3 = Vector3.new, Vector2.new, Color3.fromRGB
 local pos = V3(0, 3, 0)
+local clamp = math.clamp 
 
 --> Helper Functions:
 local function createDrawing(class, props)
@@ -31,13 +32,10 @@ local function round(num)
     return math.floor(num)
 end
 
--- Assume all your existing code above stays the same
+function ESP:AddPlayerBoxESP(player)
+    if playerBoxEspCache[player] then return end
 
--- Update AddBoxESP to accept either player or NPC model
-function ESP:AddBoxESP(model)
-    if boxEspCache[model] then return end
-
-    boxEspCache[model] = {
+    playerBoxEspCache[player] = {
         outline = createDrawing("Square", {
             Visible = false,
             Color = C3(0, 0, 0),
@@ -56,41 +54,44 @@ function ESP:AddBoxESP(model)
     }
 end
 
-function ESP:RemoveBoxESP(model)
-    if not boxEspCache[model] then return end
+function ESP:RemovePlayerBoxESP(player)
+    if not playerBoxEspCache[player] then return end
 
-    boxEspCache[model].outline:Remove()
-    boxEspCache[model].box:Remove()
-    boxEspCache[model] = nil
+    playerBoxEspCache[player].outline:Remove()
+    playerBoxEspCache[player].box:Remove()
+    playerBoxEspCache[player] = nil
 end
 
-local function updateBox(model, cached)
+local function updatePlayerBox(player, cached)
     local isFFA = #Teams:GetChildren() == 0
 
-    if not model then
+    if not player.Character then
         cached.outline.Visible = false
         cached.box.Visible = false
         return
     end
 
-    local head = model:FindFirstChild("Head")
-    local humanoid = model:FindFirstChild("Humanoid")
+    local head = player.Character:FindFirstChild("Head")
+    local humanoid = player.Character:FindFirstChild("Humanoid")
 
     if head and humanoid and humanoid.Health > 0 then
-        local cf = model:GetBoundingBox()
-        local top = wtvp(camera, cf.Position + pos)
-        local bottom = wtvp(camera, cf.Position - pos)
-        local height = top.Y - bottom.Y
-        local width = height / 1.2
-
-        local headPos, onScreen = camera:WorldToViewportPoint(head.Position)
+        local headPos, onScreen = wtvp(camera, head.Position)
 
         if onScreen then
+            local cf = player.Character:GetBoundingBox()
+            local top = wtvp(camera, cf.Position + pos)
+            local bottom = wtvp(camera, cf.Position - pos)
+
+            local distance = (camera.CFrame.Position - head.Position).Magnitude
+            local scale = clamp(1 / distance * 200, 0.5, 1.2)
+
+            local height = (top.Y - bottom.Y) * scale
+            local width = (height / 1.2) * scale
             local pos2d = V2(headPos.X - width / 2, headPos.Y - height / 1.2)
 
             cached.outline.Size = V2(width, height)
             cached.outline.Position = pos2d
-            cached.outline.Visible = isFFA or (model.Parent and model.Parent:IsA("Player")) and localPlayer.Team ~= model.Parent.Team or true
+            cached.outline.Visible = isFFA and localPlayer.Team ~= player.Team or true
 
             cached.box.Size = cached.outline.Size
             cached.box.Position = pos2d
@@ -108,63 +109,36 @@ local function updateBox(model, cached)
     cached.box.Visible = false
 end
 
-function ESP:EnableBoxESP()
+function ESP:EnablePlayerBoxESP()
     -- Add box esp to players
     for _, player in ipairs(Players:GetPlayers()) do
         if player ~= localPlayer then
-            self:AddBoxESP(player.Character)
-        end
-    end
-
-    -- Example: Add box esp to NPCs in a folder called "NPCs"
-    local NPCFolder = workspace:FindFirstChild("NPCs")
-    if NPCFolder then
-        for _, npc in ipairs(NPCFolder:GetChildren()) do
-            if npc:IsA("Model") then
-                self:AddBoxESP(npc)
-            end
+            self:AddPlayerBoxESP(player)
         end
     end
 
     ESP._playerAdded = Players.PlayerAdded:Connect(function(player)
-        self:AddBoxESP(player.Character)
+        self:AddPlayerBoxESP(player)
     end)
-
-    -- Listen for NPCs added dynamically (optional)
-    if NPCFolder then
-        ESP._npcAdded = NPCFolder.ChildAdded:Connect(function(npc)
-            if npc:IsA("Model") then
-                self:AddBoxESP(npc)
-            end
-        end)
-    end
 
     ESP._playerRemoving = Players.PlayerRemoving:Connect(function(player)
-        self:RemoveBoxESP(player.Character)
+        self:RemovePlayerBoxESP(player)
     end)
 
-    if NPCFolder then
-        ESP._npcRemoving = NPCFolder.ChildRemoved:Connect(function(npc)
-            self:RemoveBoxESP(npc)
-        end)
-    end
-
     ESP._update = RunService.RenderStepped:Connect(function()
-        for model, cached in pairs(boxEspCache) do
-            updateBox(model, cached)
+        for model, cached in pairs(playerBoxEspCache) do
+            updatePlayerBox(model, cached)
         end
     end)
 end
 
-function ESP:DisableBoxESP()
+function ESP:DisablePlayerBoxESP()
     if ESP._playerAdded then ESP._playerAdded:Disconnect() end
-    if ESP._npcAdded then ESP._npcAdded:Disconnect() end
     if ESP._playerRemoving then ESP._playerRemoving:Disconnect() end
-    if ESP._npcRemoving then ESP._npcRemoving:Disconnect() end
     if ESP._update then ESP._update:Disconnect() end
 
-    for model, _ in pairs(boxEspCache) do
-        self:RemoveBoxESP(model)
+    for player, _ in pairs(playerBoxEspCache) do
+        self:RemovePlayerBoxESP(player)
     end
 end
 

@@ -1,310 +1,154 @@
+--// Optimized ESP System (Modular, Scalable, Efficient)
+local ESP = {}
+
+--// Services
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local Teams = game:GetService("Teams")
-local Workspace = game:GetService("Workspace")
+local Camera = workspace.CurrentCamera
 
-local ESP = {}
-
+--// Aliases
 local localPlayer = Players.LocalPlayer
-local camera = Workspace.CurrentCamera
+local vector2New, vector3New = Vector2.new, Vector3.new
+local wtvp = Camera.WorldToViewportPoint
+local fromRGB = Color3.fromRGB
+local newColor = Color3.new
 
-local playerBoxEspCache, textEspCache, arrowsCache = {}, {}, {}
+--// Caches
+ESP.Caches = {
+    Square = {},
+    Text = {},
+    HealthBar = {},
+    -- Add more caches as needed
+}
 
---> Cached Commons: 
-local V3, V2, C3 = Vector3.new, Vector2.new, Color3.fromRGB
-local pos = V3(0, 3, 0)
-local clamp = math.clamp 
-
---> Helper Functions:
-local function createDrawing(class, props)
-    local drawing = Drawing.new(class)
-    for i, v in pairs(props) do
-        drawing[i] = v
+--// Utility
+local function createDrawing(typeName, properties)
+    local drawing = Drawing.new(typeName)
+    for prop, val in pairs(properties) do
+        drawing[prop] = val
     end
     return drawing
 end
 
-local function wtvp(cam, pos)
-    return cam:WorldToViewportPoint(pos)
-end
-
-local function round(num)
-    return math.floor(num)
-end
-
-function ESP:AddPlayerBoxESP(player)
-    if playerBoxEspCache[player] then return end
-
-    playerBoxEspCache[player] = {
-        outline = createDrawing("Square", {
-            Visible = false,
-            Color = C3(0, 0, 0),
-            Filled = false,
-            Thickness = 3,
-            Transparency = 1
-        }),
-
-        box = createDrawing("Square", {
-            Visible = false,
-            Color = C3(255, 255, 255),
-            Filled = false,
-            Thickness = 2,
-            Transparency = 1
-        })
-    }
-end
-
-function ESP:RemovePlayerBoxESP(player)
-    if not playerBoxEspCache[player] then return end
-
-    playerBoxEspCache[player].outline:Remove()
-    playerBoxEspCache[player].box:Remove()
-    playerBoxEspCache[player] = nil
-end
-
-local function updatePlayerBox(player, cached)
-    local isFFA = #Teams:GetChildren() == 0
-
-    if not player.Character then
-        cached.outline.Visible = false
-        cached.box.Visible = false
-        return
+local function hideAll(drawings)
+    for _, drawing in pairs(drawings) do
+        if drawing and drawing.Visible ~= nil then
+            drawing.Visible = false
+        end
     end
+end
 
-    local head = player.Character:FindFirstChild("Head")
-    local humanoid = player.Character:FindFirstChild("Humanoid")
+--// ESP Type Definitions
+ESP.Types = {}
 
-    if head and humanoid and humanoid.Health > 0 then
-        local headPos, onScreen = wtvp(camera, head.Position)
+ESP.Types["Square"] = {
+    create = function(player)
+        if not ESP.Caches.Square[player] then
+            ESP.Caches.Square[player] = {
+                Outline = createDrawing("Square", {
+                    Visible = false,
+                    Color = fromRGB(0, 0, 0),
+                    Thickness = 3,
+                    Filled = false,
+                    Transparency = 1
+                }),
+                Box = createDrawing("Square", {
+                    Visible = false,
+                    Color = fromRGB(255, 255, 255),
+                    Thickness = 2,
+                    Filled = false,
+                    Transparency = 1
+                })
+            }
+        end
+    end,
 
-        if onScreen then
-            local cf = player.Character:GetBoundingBox()
-            local top = wtvp(camera, cf.Position + pos)
-            local bottom = wtvp(camera, cf.Position - pos)
+    update = function(player)
+        local drawings = ESP.Caches.Square[player]
+        if not drawings then return end
 
-            local distance = (camera.CFrame.Position - head.Position).Magnitude
-            local scale = clamp(1 / distance * 200, 0.5, 1.2)
+        local character = player.Character
+        local box, outline = drawings.Box, drawings.Outline
+        hideAll(drawings)
 
-            local height = (top.Y - bottom.Y) * scale
-            local width = (height / 1.2) * scale
-            local pos2d = V2(headPos.X - width / 2, headPos.Y - height / 1.2)
+        if not character then return end
 
-            cached.outline.Size = V2(width, height)
-            cached.outline.Position = pos2d
-            cached.outline.Visible = isFFA and localPlayer.Team ~= player.Team or true
+        local head = character:FindFirstChild("Head")
+        local humanoid = character:FindFirstChild("Humanoid")
+        if not head or not humanoid or humanoid.Health <= 0 then return end
 
-            cached.box.Size = cached.outline.Size
-            cached.box.Position = pos2d
-            cached.box.Visible = cached.outline.Visible
+        local headPos, onScreen = wtvp(Camera, head.Position)
+        if not onScreen then return end
 
-            if ESP.BoxColor then
-                cached.box.Color = ESP.BoxColor
+        local centerCFrame = character:GetBoundingBox()
+        local halfHeight = 6 / 2 -- You can replace with dynamic value if needed
+        local top = wtvp(Camera, centerCFrame.Position + vector3New(0, halfHeight, 0))
+        local bottom = wtvp(Camera, centerCFrame.Position - vector3New(0, halfHeight, 0))
+
+        local height = top.Y - bottom.Y
+        local width = height / 1.2
+
+        local size = vector2New(width, height)
+        local position = vector2New(headPos.X - width / 2, headPos.Y - height / 1.2)
+
+        local isFFA = #Teams:GetChildren() == 0
+        local isEnemy = isFFA or localPlayer.Team ~= player.Team
+
+        outline.Size = size
+        outline.Position = position
+        outline.Visible = isEnemy
+
+        box.Size = size
+        box.Position = position
+        box.Visible = isEnemy
+    end,
+
+    remove = function(player)
+        local drawings = ESP.Caches.Square[player]
+        if drawings then
+            for _, d in pairs(drawings) do d:Remove() end
+            ESP.Caches.Square[player] = nil
+        end
+    end
+}
+
+--// Main update loop
+local activeTypes = {}
+RunService.RenderStepped:Connect(function()
+    for name, enabled in pairs(activeTypes) do
+        if enabled then
+            for _, player in ipairs(Players:GetPlayers()) do
+                if player ~= localPlayer then
+                    ESP.Types[name].update(player)
+                end
             end
-
-            return
         end
     end
+end)
 
-    cached.outline.Visible = false
-    cached.box.Visible = false
-end
-
-function ESP:EnablePlayerBoxESP()
-    -- Add box esp to players
+--// Public API
+function ESP:Enable(typeName)
+    activeTypes[typeName] = true
     for _, player in ipairs(Players:GetPlayers()) do
         if player ~= localPlayer then
-            self:AddPlayerBoxESP(player)
+            self.Types[typeName].create(player)
         end
     end
 
-    ESP._playerAdded = Players.PlayerAdded:Connect(function(player)
-        self:AddPlayerBoxESP(player)
+    Players.PlayerAdded:Connect(function(player)
+        self.Types[typeName].create(player)
     end)
 
-    ESP._playerRemoving = Players.PlayerRemoving:Connect(function(player)
-        self:RemovePlayerBoxESP(player)
-    end)
-
-    ESP._update = RunService.RenderStepped:Connect(function()
-        for model, cached in pairs(playerBoxEspCache) do
-            updatePlayerBox(model, cached)
-        end
+    Players.PlayerRemoving:Connect(function(player)
+        self.Types[typeName].remove(player)
     end)
 end
 
-function ESP:DisablePlayerBoxESP()
-    if ESP._playerAdded then ESP._playerAdded:Disconnect() end
-    if ESP._playerRemoving then ESP._playerRemoving:Disconnect() end
-    if ESP._update then ESP._update:Disconnect() end
-
-    for player, _ in pairs(playerBoxEspCache) do
-        self:RemovePlayerBoxESP(player)
-    end
-end
-
-function ESP:AddTextESP(player)
-    if textEspCache[player] then return end
-
-    textEspCache[player] = {
-        text = createDrawing("Text", {
-            Color = C3(255, 255, 255),
-            Text = "",
-            Visible = false,
-            Center = true,
-            Outline = true,
-            Position = V2(0, 0),
-            Size = 16,
-            Font = 1
-        })
-    }
-end
-
-function ESP:RemoveTextESP(player)
-    if not textEspCache[player] then return end
-    textEspCache[player].text:Remove()
-    textEspCache[player] = nil
-end
-
-local function updateText(player, cached)
-    local isFFA = #Teams:GetChildren() == 0
-    local char = player.Character
-    local text = cached.text
-
-    if not char then text.Visible = false return end
-
-    local head = char:FindFirstChild("Head")
-    local root = char:FindFirstChild("HumanoidRootPart")
-    local humanoid = char:FindFirstChild("Humanoid")
-
-    if head and root and humanoid and humanoid.Health > 0 then
-        local headPos, onScreen = wtvp(camera, head.Position)
-        if onScreen then
-            local dist = round(localPlayer:DistanceFromCharacter(head.Position))
-            local health = round(humanoid.Health)
-            local maxHealth = round(humanoid.MaxHealth)
-
-            text.Text = string.format("[%s][%d] \n [%d/%d]", player.Name, dist, health, maxHealth)
-            text.Position = V2(headPos.X, headPos.Y)
-            text.Visible = isFFA or localPlayer.Team ~= player.Team
-
-            if ESP.TextColor then
-                text.Color = ESP.TextColor
-            end
-            return
-        end
-    end
-
-    text.Visible = false
-end
-
-function ESP:EnableTextESP()
+function ESP:Disable(typeName)
+    activeTypes[typeName] = false
     for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= localPlayer then
-            self:AddTextESP(player)
-        end
-    end
-
-    self._textPlayerAdded = Players.PlayerAdded:Connect(function(player)
-        self:AddTextESP(player)
-    end)
-
-    self._textPlayerRemoving = Players.PlayerRemoving:Connect(function(player)
-        self:RemoveTextESP(player)
-    end)
-
-    self._textUpdate = RunService.RenderStepped:Connect(function()
-        for player, cached in pairs(textEspCache) do
-            updateText(player, cached)
-        end
-    end)
-end
-
-function ESP:AddArrowESP(player)
-    if arrowsCache[player] then return end
-
-    arrowsCache[player] = {
-        arrow = createDrawing("Triangle", {
-            Thickness = 1,
-            Color = C3(255, 255, 255),
-            Filled = true,
-            Visible = false,
-            Transparency = 1
-        })
-    }
-end
-
-function ESP:RemoveArrowESP(player)
-    if not arrowsCache[player] then return end
-    arrowsCache[player].arrow:Remove()
-    arrowsCache[player] = nil
-end
-
-local function updateArrow(player, cached)
-    local isFFA = #Teams:GetChildren() == 0
-    local char = player.Character
-    local arrow = cached.arrow
-
-    if not char then arrow.Visible = false return end
-
-    local root = char:FindFirstChild("HumanoidRootPart")
-    if not root then arrow.Visible = false return end
-
-    local rootPos, onScreen = camera:WorldToViewportPoint(root.Position)
-
-    if not onScreen then
-        local centerScreen = camera.ViewportSize / 2
-        local rel = -camera.CFrame:PointToObjectSpace(root.Position)
-        local dir = V2(rel.X, rel.Z).Unit
-
-        local base = dir * 150
-        local tip = dir * 170
-        local perp = V2(-dir.Y, dir.X)
-
-        local left = base - perp * 10
-        local right = base + perp * 10
-
-        if ESP.ArrowColor then
-            arrow.Color = ESP.ArrowColor
-        end
-
-        arrow.PointA = centerScreen - left
-        arrow.PointB = centerScreen - right
-        arrow.PointC = centerScreen - tip
-        arrow.Visible = isFFA or localPlayer.Team ~= player.Team
-    else
-        arrow.Visible = false
-    end
-end
-
-function ESP:EnableArrowESP()
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= localPlayer then
-            self:AddArrowESP(player)
-        end
-    end
-
-    self._arrowPlayerAdded = Players.PlayerAdded:Connect(function(player)
-        self:AddArrowESP(player)
-    end)
-
-    self._arrowPlayerRemoving = Players.PlayerRemoving:Connect(function(player)
-        self:RemoveArrowESP(player)
-    end)
-
-    self._arrowUpdate = RunService.RenderStepped:Connect(function()
-        for player, cached in pairs(arrowsCache) do
-            updateArrow(player, cached)
-        end
-    end)
-end
-
-function ESP:DisableArrowESP()
-    if self._arrowUpdate then self._arrowUpdate:Disconnect() end
-    if self._arrowPlayerAdded then self._arrowPlayerAdded:Disconnect() end
-    if self._arrowPlayerRemoving then self._arrowPlayerRemoving:Disconnect() end
-
-    for player in pairs(arrowsCache) do
-        self:RemoveArrowESP(player)
+        self.Types[typeName].remove(player)
     end
 end
 

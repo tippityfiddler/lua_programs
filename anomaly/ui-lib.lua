@@ -13,7 +13,7 @@ local function loadState()
     if isfile(saveFile) then
         local success, result = pcall(function()
             return HttpService:JSONDecode(readfile(saveFile))
-        end 
+        end)
         if success then 
             state = result 
         else 

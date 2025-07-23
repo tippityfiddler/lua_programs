@@ -20,6 +20,8 @@ ESP.Caches = {
     Text = {},
     HealthBar = {},
     Line = {}, 
+    Arrow = {},
+
 }
 
 --> Helper Functions
@@ -210,6 +212,184 @@ ESP.Types["Line"] = {
             ESP.Caches.Line[player] = nil
         end
     end
+}
+
+ESP.Types["HealthBar"] = {
+    create = function(player)
+        if not ESP.Caches.HealthBar[player] then
+            ESP.Caches.HealthBar[player] = {
+                healthBarOutline = createDrawing("Square", {
+                    Visible = false,
+                    Color = fromRGB(0, 0, 0),
+                    Thickness = 2,
+                    Filled = false,
+                    Transparency = 1
+                }),
+                healthBar = createDrawing("Square", {
+                    Visible = false,
+                    Color = fromRGB(255, 0, 0),
+                    Thickness = 1,
+                    Filled = true,
+                    Transparency = 1
+                })
+            }
+        end
+    end,
+
+    update = function(player)
+        local drawings = ESP.Caches.HealthBar[player]
+        if not drawings then return end
+
+        local character = player.Character
+        local outline, bar = drawings.healthBarOutline, drawings.healthBar
+        hideAll(drawings)
+
+        if not character then return end
+
+        local head = character:FindFirstChild("Head")
+        local humanoid = character:FindFirstChild("Humanoid")
+        if not head or not humanoid or humanoid.Health <= 0 then return end
+
+        local centerCFrame, _ = character:GetBoundingBox()
+        local halfHeight = 6 / 2
+        local top = wtvp(Camera, centerCFrame.Position + vector3New(0, halfHeight, 0))
+        local bottom = wtvp(Camera, centerCFrame.Position - vector3New(0, halfHeight, 0))
+        local height = top.Y - bottom.Y
+        local width = height / 1.2
+
+        local headPos, onScreen = wtvp(Camera, head.Position)
+        if not onScreen then return end
+
+        local healthRatio = humanoid.Health / humanoid.MaxHealth
+        local healthBarHeight = height * healthRatio
+
+        local boxPos = vector2New(headPos.X - width / 2, headPos.Y - height / 1.2)
+
+        outline.Size = vector2New(2, height)
+        outline.Position = vector2New(boxPos.X + 3, boxPos.Y)
+        outline.Visible = (#Teams:GetChildren() == 0 or localPlayer.Team ~= player.Team) and onScreen
+
+        bar.Size = vector2New(1, healthBarHeight)
+        local offsetX = (outline.Size.X - bar.Size.X) / 2
+        bar.Position = vector2New(outline.Position.X + offsetX, outline.Position.Y + (height - healthBarHeight))
+        bar.Color = Color3.new(1, 0, 0):Lerp(Color3.new(0, 1, 0), healthRatio)
+        bar.Visible = outline.Visible
+    end,
+
+    remove = function(player)
+        local drawings = ESP.Caches.HealthBar[player]
+        if drawings then
+            for _, d in pairs(drawings) do d:Remove() end
+            ESP.Caches.HealthBar[player] = nil
+        end
+    end
+}
+
+-- Add Arrow cache to ESP caches
+ESP.Caches.Arrow = {}
+
+-- Add Arrow type to ESP.Types
+ESP.Types["Arrow"] = {
+    create = function(player)
+        if ESP.Caches.Arrow[player] then return end
+
+        -- Create arrow outline and arrow drawings
+        ESP.Caches.Arrow[player] = {
+            arrowOutline = createDrawing("Triangle", {
+                Filled = false,
+                Color = Color3.fromRGB(0, 0, 0),
+                Visible = false,
+                Transparency = 1,
+                Thickness = 2,
+            }),
+            arrow = createDrawing("Triangle", {
+                Filled = true,
+                Color = Color3.fromRGB(255, 0, 0),
+                Visible = false,
+                Transparency = 1,
+                Thickness = 1,
+            }),
+        }
+    end,
+
+    update = function(player)
+        local espData = ESP.Caches.Arrow[player]
+        if not espData then return end
+
+        local arrowOutline = espData.arrowOutline
+        local arrow = espData.arrow
+        local character = player.Character
+        local camera = workspace.CurrentCamera
+        local localPlayer = Players.LocalPlayer
+
+        if not character or not localPlayer.Character or not localPlayer.Character.PrimaryPart then
+            arrowOutline.Visible = false
+            arrow.Visible = false
+            return
+        end
+
+        local root = character:FindFirstChild("HumanoidRootPart")
+        if not root then
+            arrowOutline.Visible = false
+            arrow.Visible = false
+            return
+        end
+
+        local _, onScreen = camera:WorldToViewportPoint(root.Position)
+        if onScreen then
+            arrowOutline.Visible = false
+            arrow.Visible = false
+            return
+        end
+
+        local centerScreen = camera.ViewportSize / 2
+        local targetPos = vector3New(root.Position.X, 0, root.Position.Z)
+        local localPos = vector3New(localPlayer.Character.PrimaryPart.Position.X, 0, localPlayer.Character.PrimaryPart.Position.Z)
+
+        local displacement = targetPos - localPos
+        local displacement2D = vector2New(displacement.X, displacement.Z)
+
+        local cameraYaw = math.atan2(camera.CFrame.LookVector.X, camera.CFrame.LookVector.Z)
+        local cosYaw, sinYaw = math.cos(cameraYaw), math.sin(cameraYaw)
+
+        local rotatedX = (displacement2D.X * -cosYaw) - (displacement2D.Y * -sinYaw)
+        local rotatedY = (displacement2D.X * -sinYaw) + (displacement2D.Y * -cosYaw)
+
+        local dir = vector2New(rotatedX, rotatedY)
+        if dir.Magnitude == 0 then
+            arrowOutline.Visible = false
+            arrow.Visible = false
+            return
+        end
+        local unitDir = dir.Unit
+
+        local base = unitDir * 100
+        local tip = unitDir * 120
+
+        local perp = vector2New(-unitDir.Y, unitDir.X)
+        local leftEdge = base - perp * 10
+        local rightEdge = base + perp * 10
+
+        arrowOutline.PointA = centerScreen + leftEdge
+        arrowOutline.PointB = centerScreen + rightEdge
+        arrowOutline.PointC = centerScreen + tip
+
+        arrow.PointA = arrowOutline.PointA
+        arrow.PointB = arrowOutline.PointB
+        arrow.PointC = arrowOutline.PointC
+
+        arrowOutline.Visible = true
+        arrow.Visible = true
+    end,
+
+    remove = function(player)
+        local espData = ESP.Caches.Arrow[player]
+        if espData then
+            espData.arrow:Remove()
+            espData.arrowOutline:Remove()
+            ESP.Caches.Arrow[player] = nil
+        end
+    end,
 }
 
 --> Main update loop

@@ -86,8 +86,16 @@ ESP.Types["Square"] = {
         local top = wtvp(Camera, centerCFrame.Position + vector3New(0, halfHeight, 0))
         local bottom = wtvp(Camera, centerCFrame.Position - vector3New(0, halfHeight, 0))
 
-        local height = top.Y - bottom.Y
+        local height = math.abs(top.Y - bottom.Y)
+        local minHeight = 25  -- Minimum height in pixels
+        if height < minHeight then
+            height = minHeight
+        end
+
         local width = height / 1.2 
+
+        --> avg width is 113 at a good dist, avg height is 135 
+
 
         local size = vector2New(width, height)
         local position = vector2New(headPos.X - width / 2, headPos.Y - height / 1.2)

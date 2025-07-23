@@ -98,7 +98,7 @@ ESP.Types["Square"] = {
 
 
         local size = vector2New(width, height)
-        local position = vector2New(headPos.X - width / 2, headPos.Y - height / 1.2)
+        local position = vector2New(headPos.X - width / 2, headPos.Y - height / 1.5)
 
         local isFFA = #Teams:GetChildren() == 0
         local isEnemy = isFFA or localPlayer.Team ~= player.Team

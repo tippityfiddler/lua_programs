@@ -81,12 +81,16 @@ ESP.Types["Square"] = {
         local headPos, onScreen = wtvp(Camera, head.Position)
         if not onScreen then return end
 
+        local distance = (Camera.CFrame.Position - head.Position).Magnitude
+        -- Distance scale factor (inverse relation, clamp to reasonable limits)
+        local distanceScale = math.clamp(1 / (distance / 25), 0.5, 1.5)
+
         local centerCFrame = character:GetBoundingBox()
         local halfHeight = 6 / 2 -- You can replace with dynamic value if needed
         local top = wtvp(Camera, centerCFrame.Position + vector3New(0, halfHeight, 0))
         local bottom = wtvp(Camera, centerCFrame.Position - vector3New(0, halfHeight, 0))
 
-        local height = top.Y - bottom.Y
+        local height = (top.Y - bottom.Y) * distanceScale
         local width = height / 1.2
 
         local size = vector2New(width, height)

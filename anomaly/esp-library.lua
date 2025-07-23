@@ -19,7 +19,7 @@ ESP.Caches = {
     Square = {},
     Text = {},
     HealthBar = {},
-    Lines = {}, 
+    Line = {}, 
 }
 
 --> Helper Functions

@@ -13,6 +13,7 @@ local vector2New, vector3New = Vector2.new, Vector3.new
 local wtvp = Camera.WorldToViewportPoint
 local fromRGB = Color3.fromRGB
 local newColor = Color3.new
+local pos = vector3New(0,3,0)
 
 --> Caches
 ESP.Caches = {
@@ -221,8 +222,8 @@ ESP.Types["HealthBar"] = {
                 healthBarOutline = createDrawing("Square", {
                     Visible = false,
                     Color = fromRGB(0, 0, 0),
-                    Thickness = 2,
-                    Filled = false,
+                    Thickness = 3,
+                    Filled = true,
                     Transparency = 1
                 }),
                 healthBar = createDrawing("Square", {
@@ -251,9 +252,8 @@ ESP.Types["HealthBar"] = {
         if not head or not humanoid or humanoid.Health <= 0 then return end
 
         local centerCFrame, _ = character:GetBoundingBox()
-        local halfHeight = 6 / 2
-        local top = wtvp(Camera, centerCFrame.Position + vector3New(0, halfHeight, 0))
-        local bottom = wtvp(Camera, centerCFrame.Position - vector3New(0, halfHeight, 0))
+        local top = wtvp(Camera, centerCFrame.Position + pos)
+        local bottom = wtvp(Camera, centerCFrame.Position - pos)
         local height = top.Y - bottom.Y
         local width = height / 1.2
 

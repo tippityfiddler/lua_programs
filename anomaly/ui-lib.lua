@@ -11,7 +11,7 @@ local saveFile = saveFolder .. "/Data.json"
 
 local function loadState()
     if isfile(saveFile) then
-        state = HttpService:JSONDecode(readfile(saveFile))
+        state = HttpService:JSONDecode(readfile(saveFile)) or {}
     end
 end
 

@@ -49,14 +49,14 @@ ESP.Types["Square"] = {
                 Outline = createDrawing("Square", {
                     Visible = false,
                     Color = fromRGB(0, 0, 0),
-                    Thickness = 3,
+                    Thickness = 2,
                     Filled = false,
                     Transparency = 1
                 }),
                 Box = createDrawing("Square", {
                     Visible = false,
                     Color = fromRGB(255, 255, 255),
-                    Thickness = 2,
+                    Thickness = 1,
                     Filled = false,
                     Transparency = 1
                 })
@@ -86,19 +86,12 @@ ESP.Types["Square"] = {
         local top = wtvp(Camera, centerCFrame.Position + vector3New(0, halfHeight, 0))
         local bottom = wtvp(Camera, centerCFrame.Position - vector3New(0, halfHeight, 0))
 
-        local height = math.abs(top.Y - bottom.Y)
-        local minHeight = 25  -- Minimum height in pixels
-        if height < minHeight then
-            height = minHeight
-        end
-
+        local height = top.Y - bottom.Y
         local width = height / 1.2 
-
         --> avg width is 113 at a good dist, avg height is 135 
 
-
         local size = vector2New(width, height)
-        local position = vector2New(headPos.X - width / 2, headPos.Y - height / 1.5)
+        local position = vector2New(headPos.X - width / 2, headPos.Y - height / 1.2)
 
         local isFFA = #Teams:GetChildren() == 0
         local isEnemy = isFFA or localPlayer.Team ~= player.Team

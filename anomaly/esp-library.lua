@@ -1,45 +1,45 @@
---// Optimized ESP System (Modular, Scalable, Efficient)
+
 local ESP = {}
 
---// Services
+--> Services
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local Teams = game:GetService("Teams")
 local Camera = workspace.CurrentCamera
 
---// Aliases
+--> Cached Commons
 local localPlayer = Players.LocalPlayer
 local vector2New, vector3New = Vector2.new, Vector3.new
 local wtvp = Camera.WorldToViewportPoint
 local fromRGB = Color3.fromRGB
 local newColor = Color3.new
 
---// Caches
+--> Caches
 ESP.Caches = {
     Square = {},
     Text = {},
     HealthBar = {},
-    -- Add more caches as needed
+    Lines = {}, 
 }
 
---// Utility
+--> Helper Functions
 local function createDrawing(typeName, properties)
     local drawing = Drawing.new(typeName)
-    for prop, val in pairs(properties) do
+    for prop, val in next, properties do
         drawing[prop] = val
     end
     return drawing
 end
 
 local function hideAll(drawings)
-    for _, drawing in pairs(drawings) do
+    for _,drawing in next, drawings do
         if drawing and drawing.Visible ~= nil then
             drawing.Visible = false
         end
     end
 end
 
---// ESP Type Definitions
+--> ESP Type Definitions
 ESP.Types = {}
 
 ESP.Types["Square"] = {
@@ -108,18 +108,116 @@ ESP.Types["Square"] = {
     remove = function(player)
         local drawings = ESP.Caches.Square[player]
         if drawings then
-            for _, d in pairs(drawings) do d:Remove() end
+            for _,d in next, drawings do d:Remove() end
             ESP.Caches.Square[player] = nil
         end
     end
 }
 
---// Main update loop
+ESP.Types["Line"] = {
+    create = function(player)
+        if not ESP.Caches.Line[player] then
+            ESP.Caches.Line[player] = {
+                lineOutline = createDrawing("Line", {
+                    Visible = false,
+                    Color = fromRGB(0, 0, 0),
+                    Thickness = 3,
+                    Transparency = 1,
+                }),
+                line = createDrawing("Line", {
+                    Visible = false,
+                    Color = fromRGB(255, 255, 255),
+                    Thickness = 1,
+                    Transparency = 1,
+                }),
+            }
+        end
+    end,
+
+    update = function(player)
+        local cachedDrawings = ESP.Caches.Line[player]
+        if not cachedDrawings then return end
+
+        local lineOutline = cachedDrawings.lineOutline
+        local line = cachedDrawings.line
+
+        local character = player.Character
+        if not character then
+            line.Visible = false
+            lineOutline.Visible = false
+            return
+        end
+
+        local head = character:FindFirstChild("Head")
+        local root = character:FindFirstChild("HumanoidRootPart")
+        local humanoid = character:FindFirstChild("Humanoid")
+        if not head or not root or not humanoid or humanoid.Health <= 0 then
+            line.Visible = false
+            lineOutline.Visible = false
+            return
+        end
+
+        local centerCFrame, _ = character:GetBoundingBox()
+        local topOfObject = wtvp(Camera, centerCFrame.Position + vector3New(0, 6 / 2, 0))
+        local bottomOfObject = wtvp(Camera, centerCFrame.Position - vector3New(0, 6 / 2, 0))
+
+        local heightOfObject = topOfObject.Y - bottomOfObject.Y
+        local widthOfObject = heightOfObject / 1.2
+
+        local root2dPos, onScreenRoot = wtvp(Camera, root.Position)
+        local headPos, onScreenHead = wtvp(Camera, head.Position)
+
+        local boxOutlineSize = vector2New(widthOfObject, heightOfObject)
+        local boxOutlinePosition = vector2New(headPos.X - boxOutlineSize.X / 2, headPos.Y - boxOutlineSize.Y / 1.2)
+
+        local isFFA = #Teams:GetChildren() == 0
+        local shouldShow = (isFFA or localPlayer.Team ~= player.Team) and onScreenRoot and onScreenHead
+
+        if shouldShow then
+            line.From = vector2New(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
+
+            if ESP.Caches.Square[player] then
+                local bottomMiddle = vector2New(
+                    boxOutlinePosition.X + boxOutlineSize.X / 2,
+                    boxOutlinePosition.Y + 0.75
+                )
+                line.To = bottomMiddle
+            else
+                line.To = vector2New(root2dPos.X, root2dPos.Y)
+            end
+
+            lineOutline.From = line.From
+            lineOutline.To = line.To
+
+            line.Visible = true
+            lineOutline.Visible = true
+
+            -- Use a customizable color if you want, else white by default
+            if ESP.LineColor then
+                line.Color = ESP.LineColor
+            end
+        else
+            line.Visible = false
+            lineOutline.Visible = false
+        end
+    end,
+
+    remove = function(player)
+        local drawings = ESP.Caches.Line[player]
+        if drawings then
+            drawings.line:Remove()
+            drawings.lineOutline:Remove()
+            ESP.Caches.Line[player] = nil
+        end
+    end
+}
+
+--> Main update loop
 local activeTypes = {}
 RunService.RenderStepped:Connect(function()
-    for name, enabled in pairs(activeTypes) do
+    for name,enabled in next, activeTypes do
         if enabled then
-            for _, player in ipairs(Players:GetPlayers()) do
+            for _,player in next, Players:GetPlayers() do
                 if player ~= localPlayer then
                     ESP.Types[name].update(player)
                 end
@@ -128,10 +226,10 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
---// Public API
+--> Public Library Functions
 function ESP:Enable(typeName)
     activeTypes[typeName] = true
-    for _, player in ipairs(Players:GetPlayers()) do
+    for _,player in next, Players:GetPlayers() do
         if player ~= localPlayer then
             self.Types[typeName].create(player)
         end
@@ -148,7 +246,7 @@ end
 
 function ESP:Disable(typeName)
     activeTypes[typeName] = false
-    for _, player in ipairs(Players:GetPlayers()) do
+    for _,player in next, Players:GetPlayers() do
         self.Types[typeName].remove(player)
     end
 end

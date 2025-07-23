@@ -88,7 +88,7 @@ ESP.Types["Square"] = {
 
         local height = top.Y - bottom.Y
         local width = height / 1.2 
-        local height, width = math.clamp(height, 130, 140), math.clamp(width, 110, 120)
+        local height, width = math.clamp(height, -140, -130), math.clamp(width, -120, -110)
         --> avg width is 113 at a good dist, avg height is 135 
 
 

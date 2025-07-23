@@ -11,7 +11,14 @@ local saveFile = saveFolder .. "/Data.json"
 
 local function loadState()
     if isfile(saveFile) then
-        state = HttpService:JSONDecode(readfile(saveFile)) or {}
+        local success, result = pcall(function()
+            return HttpService:JSONDecode(readfile(saveFile))
+        end 
+        if success then 
+            state = result 
+        else 
+            state = {}
+        end 
     end
 end
 

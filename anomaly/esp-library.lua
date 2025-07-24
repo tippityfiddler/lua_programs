@@ -271,7 +271,7 @@ ESP.Types["HealthBar"] = {
 
         bar.Size = vector2New(1, healthBarHeight)
         local offsetX = (outline.Size.X - bar.Size.X) / 2
-        bar.Position = vector2New(outline.Position.X + offsetX, outline.Position.Y + (height - healthBarHeight))
+        bar.Position = vector2New(outline.Position.X + offsetX, outline.Position.Y)
         bar.Color = Color3.new(1, 0, 0):Lerp(Color3.new(0, 1, 0), healthRatio)
         bar.Visible = outline.Visible
     end,

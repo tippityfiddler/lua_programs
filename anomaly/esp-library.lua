@@ -265,7 +265,7 @@ ESP.Types["HealthBar"] = {
 
         local boxPos = vector2New(headPos.X - width / 2, headPos.Y - height / 1.2)
 
-        outline.Size = vector2New(2, healthBarHeight)
+        outline.Size = vector2New(2, height)
         outline.Position = vector2New(boxPos.X + 3, boxPos.Y)
         outline.Visible = (#Teams:GetChildren() == 0 or localPlayer.Team ~= player.Team) and onScreen
 

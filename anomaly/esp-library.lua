@@ -96,7 +96,6 @@ ESP.Types["Square"] = {
 
         local height = top.Y - bottom.Y
         local width = height / 1.2 
-        --> avg width is 113 at a good dist, avg height is 135 
 
         local size = vector2New(width, height)
         local position = vector2New(headPos.X - width / 2, headPos.Y - height / 1.2)
@@ -120,6 +119,48 @@ ESP.Types["Square"] = {
             ESP.Caches.Square[player] = nil
         end
     end
+}
+
+ESP.Types["CustomText"] = {
+    create = function(part)
+        if not ESP.Caches.CustomText[part] then
+            ESP.Caches.CustomText[part] = {
+                Text = createDrawing("Text", { 
+                    Color = fromRGB(255, 255, 255),
+                    Text = "", 
+                    Visible = false,
+                    Center = true, 
+                    Outline = true, 
+                    Position = vector2New(0, 0),
+                    Size = 16,
+                    Font = 2
+                })
+            }
+        end
+    end,
+
+    update = function(part, text)
+        if not part or not text then return end 
+        local drawings = ESP.Caches.CustomText[part]
+        if not drawings then return end
+        local text = drawings.Text
+
+        local partPos, onScreen = wtvp(Camera, part.Position)
+        if not onScreen then text.Visible = false; return end
+
+        local distance = round(localPlayer:DistanceFromCharacter(part.Position))
+        text.Visible = true 
+        text.Position = vector2New(partPos.X, partPos.Y) 
+        text.Text = string.format("[%s] [%d]", text, distance)
+    end,
+
+    remove = function(part)
+        local drawings = ESP.Caches.CustomText[part]
+        if drawings then
+            for _,d in next, drawings do d:Remove() end
+            ESP.Caches.CustomText[part] = nil
+        end
+    end,  
 }
 
 ESP.Types["Line"] = {
@@ -390,110 +431,24 @@ ESP.Types["Arrow"] = {
     end,
 }
 
-ESP.Types["CustomText"] = { 
-    create = function(part)
-        if ESP.Caches.CustomText[part] then return end
-
-        ESP.Caches.CustomText[part] = {
-            text = createDrawing("Text", {
-                Color = fromRGB(255, 255, 255),
-                Text = "", 
-                Visible = false,
-                Center = true, 
-                Outline = true, 
-                Position = vector2New(0, 0),
-                Size = 16,
-                Font = 1
-            }),
-        }
-    end,
-
-    update = function(part, text)
-        if not part then return end 
-        local espData = ESP.Caches.CustomText[part]
-        if not espData then return end
-
-        local text = espData.text
-        local distance = round(localPlayer:DistanceFromCharacter(part.Position))
-        local partPos, onScreen = wtvp(Camera, part.Position)
-
-        if not onScreen then
-            text.Visible = false
-            return
-        end
-
-        text.Visible = true
-        text.Position = vector2New(partPos.X, partPos.Y) 
-        text.Text = string.format("[%s] | [%d]", text, distance)
-    end,
-
-    remove = function(part)
-        local espData = ESP.Caches.CustomText[part]
-        if espData then
-            espData.text:Remove()
-            ESP.Caches.CustomText[part] = nil
-        end
-    end,
-}
-
---> Main update loop
-local activeTypes = {}
-RunService.RenderStepped:Connect(function()
-    for name,enabled in next, activeTypes do
-        if enabled then
-            if name == "Custom Text" then 
-                if not ESP.Types[name].folder then  
-                    
-                else 
-                    for i,v in next, ESP.Types[name].folder:GetChildren() do 
-                        ESP.Types[name].update(v, v.Name)
-                    end 
-                end 
-            else 
-                for _,player in next, Players:GetPlayers() do
-                    if player ~= localPlayer then
-                        ESP.Types[name].update(player)
-                    end 
-                end
-            end 
-        end 
-    end
-end)
-
 --> Public Library Functions
+local activeTypes = {}
 function ESP:Enable(typeName)
-    if typeName == "CustomText" then 
-        activeTypes[typeName] = true 
-        if not self.Types[typeName].folder then return end 
-        for i,v in next, self.Types[typeName].folder:GetChildren() do
-            self.Types[typeName].create(v)
 
-              
-        end
-
-        self.Types[typeName].folder.ChildAdded:Connect(function(player)
+    activeTypes[typeName] = true
+    for _,player in next, Players:GetPlayers() do
+        if player ~= localPlayer then
             self.Types[typeName].create(player)
-        end)
-        
-        self.Types[typeName].folder.ChildRemoved:Connect(function(child)
-            self.Types[typeName].remove(child)
-        end)
-    else
-        activeTypes[typeName] = true
-        for _,player in next, Players:GetPlayers() do
-            if player ~= localPlayer then
-                self.Types[typeName].create(player)
-            end
         end
+    end
 
-        ESP.Connections.PlayerAdded = Players.PlayerAdded:Connect(function(player)
-            self.Types[typeName].create(player)
-        end)
+    ESP.Connections.PlayerAdded = Players.PlayerAdded:Connect(function(player)
+        self.Types[typeName].create(player)
+    end)
 
-        ESP.Connections.PlayerRemoving = Players.PlayerRemoving:Connect(function(player)
-            self.Types[typeName].remove(player)
-        end)
-    end 
+    ESP.Connections.PlayerRemoving = Players.PlayerRemoving:Connect(function(player)
+        self.Types[typeName].remove(player)
+    end)
 end
 
 function ESP:Disable(typeName)

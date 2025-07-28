@@ -147,11 +147,16 @@ ESP.Types["CustomText"] = {
 
         local partPos, onScreen = wtvp(Camera, part.Position)
         if not onScreen then text.Visible = false; return end
-
-        local distance = round(localPlayer:DistanceFromCharacter(part.Position))
+        local char = localPlayer.Character 
+        if not char then return end 
+        local rootPart = char:FindFirstChild("HumanoidRootPart") 
+        if not rootPart then return end 
+        local distance = round((part.Position - rootPart.Position).Magnitude)
         text.Visible = true 
         text.Position = vector2New(partPos.X, partPos.Y) 
-        text.Text = "[" .. espText .. "] " .. "[" .. distance .. "]"
+        local formatted =  "[" .. espText .. "] " .. "[" .. distance .. "]"
+        if text.Text == formatted then return end 
+        text.Text = formatted
     end,
 
     remove = function(part)

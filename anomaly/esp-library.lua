@@ -1,31 +1,37 @@
 
 local ESP = {}
 
---> Services
+--> Services:
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local Teams = game:GetService("Teams")
 local Camera = workspace.CurrentCamera
 
---> Cached Commons
+--> Cached Commons:
 local localPlayer = Players.LocalPlayer
 local vector2New, vector3New = Vector2.new, Vector3.new
 local wtvp = Camera.WorldToViewportPoint
 local fromRGB = Color3.fromRGB
 local newColor = Color3.new
 local pos = vector3New(0,3,0)
+local round = math.floor 
 
---> Caches
+--> Caches:
 ESP.Caches = {
     Square = {},
     Text = {},
     HealthBar = {},
     Line = {}, 
     Arrow = {},
+    CustomText = {}, 
 
 }
 
---> Helper Functions
+ESP.Connections = {
+    PlayerAdded = nil, 
+    PlayerRemoving = nil 
+}
+--> Helper Functions:
 local function createDrawing(typeName, properties)
     local drawing = Drawing.new(typeName)
     for prop, val in next, properties do
@@ -42,7 +48,7 @@ local function hideAll(drawings)
     end
 end
 
---> ESP Type Definitions
+--> ESP Type Definitions:
 ESP.Types = {}
 
 ESP.Types["Square"] = {
@@ -85,9 +91,8 @@ ESP.Types["Square"] = {
         if not onScreen then return end
 
         local centerCFrame = character:GetBoundingBox()
-        local halfHeight = 6 / 2 -- You can replace with dynamic value if needed
-        local top = wtvp(Camera, centerCFrame.Position + vector3New(0, halfHeight, 0))
-        local bottom = wtvp(Camera, centerCFrame.Position - vector3New(0, halfHeight, 0))
+        local top = wtvp(Camera, centerCFrame.Position + pos)
+        local bottom = wtvp(Camera, centerCFrame.Position - pos)
 
         local height = top.Y - bottom.Y
         local width = height / 1.2 
@@ -161,8 +166,8 @@ ESP.Types["Line"] = {
         end
 
         local centerCFrame, _ = character:GetBoundingBox()
-        local topOfObject = wtvp(Camera, centerCFrame.Position + vector3New(0, 6 / 2, 0))
-        local bottomOfObject = wtvp(Camera, centerCFrame.Position - vector3New(0, 6 / 2, 0))
+        local topOfObject = wtvp(Camera, centerCFrame.Position + pos)
+        local bottomOfObject = wtvp(Camera, centerCFrame.Position - pos)
 
         local heightOfObject = topOfObject.Y - bottomOfObject.Y
         local widthOfObject = heightOfObject / 1.2
@@ -195,7 +200,6 @@ ESP.Types["Line"] = {
             line.Visible = true
             lineOutline.Visible = true
 
-            -- Use a customizable color if you want, else white by default
             if ESP.LineColor then
                 line.Color = ESP.LineColor
             end
@@ -285,15 +289,11 @@ ESP.Types["HealthBar"] = {
     end
 }
 
--- Add Arrow cache to ESP caches
 ESP.Caches.Arrow = {}
-
--- Add Arrow type to ESP.Types
 ESP.Types["Arrow"] = {
     create = function(player)
         if ESP.Caches.Arrow[player] then return end
 
-        -- Create arrow outline and arrow drawings
         ESP.Caches.Arrow[player] = {
             arrowOutline = createDrawing("Triangle", {
                 Filled = false,
@@ -319,8 +319,6 @@ ESP.Types["Arrow"] = {
         local arrowOutline = espData.arrowOutline
         local arrow = espData.arrow
         local character = player.Character
-        local camera = workspace.CurrentCamera
-        local localPlayer = Players.LocalPlayer
 
         if not character or not localPlayer.Character or not localPlayer.Character.PrimaryPart then
             arrowOutline.Visible = false
@@ -335,22 +333,22 @@ ESP.Types["Arrow"] = {
             return
         end
 
-        local _, onScreen = camera:WorldToViewportPoint(root.Position)
+        local _, onScreen = wtvp(Camera, root.Position)
         if onScreen then
             arrowOutline.Visible = false
             arrow.Visible = false
             return
         end
 
-        local centerScreen = camera.ViewportSize / 2
+        local centerScreen = Camera.ViewportSize / 2
         local targetPos = vector3New(root.Position.X, 0, root.Position.Z)
         local localPos = vector3New(localPlayer.Character.PrimaryPart.Position.X, 0, localPlayer.Character.PrimaryPart.Position.Z)
 
         local displacement = targetPos - localPos
         local displacement2D = vector2New(displacement.X, displacement.Z)
 
-        local cameraYaw = math.atan2(camera.CFrame.LookVector.X, camera.CFrame.LookVector.Z)
-        local cosYaw, sinYaw = math.cos(cameraYaw), math.sin(cameraYaw)
+        local CameraYaw = math.atan2(Camera.CFrame.LookVector.X, Camera.CFrame.LookVector.Z)
+        local cosYaw, sinYaw = math.cos(CameraYaw), math.sin(CameraYaw)
 
         local rotatedX = (displacement2D.X * -cosYaw) - (displacement2D.Y * -sinYaw)
         local rotatedY = (displacement2D.X * -sinYaw) + (displacement2D.Y * -cosYaw)
@@ -392,36 +390,110 @@ ESP.Types["Arrow"] = {
     end,
 }
 
+ESP.Types["CustomText"] = { 
+    create = function(part)
+        if ESP.Caches.CustomText[part] then return end
+
+        ESP.Caches.CustomText[part] = {
+            text = createDrawing("Text", {
+                Color = fromRGB(255, 255, 255),
+                Text = "", 
+                Visible = false,
+                Center = true, 
+                Outline = true, 
+                Position = vector2New(0, 0),
+                Size = 16,
+                Font = 1
+            }),
+        }
+    end,
+
+    update = function(part, text)
+        if not part then return end 
+        local espData = ESP.Caches.CustomText[part]
+        if not espData then return end
+
+        local text = espData.text
+        local distance = round(localPlayer:DistanceFromCharacter(part.Position))
+        local partPos, onScreen = wtvp(Camera, part.Position)
+
+        if not onScreen then
+            text.Visible = false
+            return
+        end
+
+        text.Visible = true
+        text.Position = vector2New(partPos.X, partPos.Y) 
+        text.Text = string.format("[%s] | [%d]", text, distance)
+    end,
+
+    remove = function(part)
+        local espData = ESP.Caches.CustomText[part]
+        if espData then
+            espData.text:Remove()
+            ESP.Caches.CustomText[part] = nil
+        end
+    end,
+}
+
 --> Main update loop
 local activeTypes = {}
 RunService.RenderStepped:Connect(function()
     for name,enabled in next, activeTypes do
         if enabled then
-            for _,player in next, Players:GetPlayers() do
-                if player ~= localPlayer then
-                    ESP.Types[name].update(player)
+            if name == "Custom Text" then 
+                if not ESP.Types[name].folder then  
+                    
+                else 
+                    for i,v in next, ESP.Types[name].folder:GetChildren() do 
+                        ESP.Types[name].update(v)
+                    end 
+                end 
+            else 
+                for _,player in next, Players:GetPlayers() do
+                    if player ~= localPlayer then
+                        ESP.Types[name].update(player)
+                    end 
                 end
-            end
-        end
+            end 
+        end 
     end
 end)
 
 --> Public Library Functions
 function ESP:Enable(typeName)
-    activeTypes[typeName] = true
-    for _,player in next, Players:GetPlayers() do
-        if player ~= localPlayer then
-            self.Types[typeName].create(player)
+    if typeName == "CustomText" then 
+        activeTypes[typeName] = true 
+        if not self.Types[typeName].folder then return end 
+        for i,v in next, self.Types[typeName].folder:GetChildren() do
+            self.Types[typeName].create(v)
+
+              
         end
-    end
 
-    Players.PlayerAdded:Connect(function(player)
-        self.Types[typeName].create(player)
-    end)
+        self.Types[typeName].folder.ChildAdded:Connect(function(player)
+            self.Types[typeName].create(player)
+        end)
+        
+        self.Types[typeName].folder.ChildRemoved:Connect(function(child)
+            self.Types[typeName].remove(child)
+        end)
+    else
+        activeTypes[typeName] = true
+        for _,player in next, Players:GetPlayers() do
+            if player ~= localPlayer then
+                self.Types[typeName].create(player)
+            end
+        end
 
-    Players.PlayerRemoving:Connect(function(player)
-        self.Types[typeName].remove(player)
-    end)
+        ESP.Connections.PlayerAdded = Players.PlayerAdded:Connect(function(player)
+            self.Types[typeName].create(player)
+        end)
+
+        ESP.Connections.PlayerRemoving = Players.PlayerRemoving:Connect(function(player)
+            self.Types[typeName].remove(player)
+        end)
+    end 
 end
 
 function ESP:Disable(typeName)
@@ -429,6 +501,10 @@ function ESP:Disable(typeName)
     for _,player in next, Players:GetPlayers() do
         self.Types[typeName].remove(player)
     end
-end
+
+    if ESP.Connections.PlayerAdded then ESP.Connections.PlayerAdded:Disconnect(); ESP.Connections.PlayerAdded = nil end 
+    if ESP.Connections.PlayerRemoving then ESP.Connections.PlayerRemoving:Disconnect(); ESP.Connections.PlayerRemoving = nil end 
+
+end 
 
 return ESP

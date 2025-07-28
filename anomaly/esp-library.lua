@@ -151,7 +151,7 @@ ESP.Types["CustomText"] = {
         local distance = round(localPlayer:DistanceFromCharacter(part.Position))
         text.Visible = true 
         text.Position = vector2New(partPos.X, partPos.Y) 
-        text.Text = string.format("[%s] [%d]", espText, distance)
+        text.Text = "[" .. espText .. "] " .. "[" .. distance .. "]"
     end,
 
     remove = function(part)

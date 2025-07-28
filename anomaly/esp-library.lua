@@ -446,7 +446,7 @@ RunService.RenderStepped:Connect(function()
                     
                 else 
                     for i,v in next, ESP.Types[name].folder:GetChildren() do 
-                        ESP.Types[name].update(v)
+                        ESP.Types[name].update(v, v.Name)
                     end 
                 end 
             else 

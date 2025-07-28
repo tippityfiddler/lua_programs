@@ -140,7 +140,7 @@ ESP.Types["CustomText"] = {
     end,
 
     update = function(part, espText)
-        if not part or not text then return end 
+        if not part or not espText then return end 
         local drawings = ESP.Caches.CustomText[part]
         if not drawings then return end
         local text = drawings.Text

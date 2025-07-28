@@ -139,7 +139,7 @@ ESP.Types["CustomText"] = {
         end
     end,
 
-    update = function(part, text)
+    update = function(part, espText)
         if not part or not text then return end 
         local drawings = ESP.Caches.CustomText[part]
         if not drawings then return end
@@ -151,7 +151,7 @@ ESP.Types["CustomText"] = {
         local distance = round(localPlayer:DistanceFromCharacter(part.Position))
         text.Visible = true 
         text.Position = vector2New(partPos.X, partPos.Y) 
-        text.Text = string.format("[%s] [%d]", text, distance)
+        text.Text = string.format("[%s] [%d]", espText, distance)
     end,
 
     remove = function(part)

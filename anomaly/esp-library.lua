@@ -122,11 +122,11 @@ ESP.Types["Square"] = {
 }
 
 ESP.Types["CustomText"] = {
-    create = function(model)
+    create = function(model, colour)
         if not ESP.Caches.CustomText[model] then
             ESP.Caches.CustomText[model] = {
                 Text = createDrawing("Text", { 
-                    Color = fromRGB(255, 255, 255),
+                    Color = colour or fromRGB(255, 255, 255),
                     Text = "", 
                     Visible = false,
                     Center = true, 

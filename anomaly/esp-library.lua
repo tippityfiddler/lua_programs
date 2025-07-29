@@ -1,3 +1,4 @@
+
 local ESP = {}
 
 --> Services:
@@ -144,8 +145,7 @@ ESP.Types["CustomText"] = {
         if not drawings then return end
 
         local text = drawings.Text
-        local modelPos = model:GetPivot().Position
-        print(modelPos)
+        local modelPos = model.WorldPivot.Position
         local partPos, onScreen = wtvp(Camera, modelPos)
 
         if not onScreen then text.Visible = false; return end

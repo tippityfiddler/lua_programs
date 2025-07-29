@@ -122,12 +122,12 @@ ESP.Types["Square"] = {
 }
 
 ESP.Types["CustomText"] = {
-    create = function(model, colour)
+    create = function(model, colour, text)
         if not ESP.Caches.CustomText[model] then
             ESP.Caches.CustomText[model] = {
                 Text = createDrawing("Text", { 
                     Color = colour or fromRGB(255, 255, 255),
-                    Text = "", 
+                    Text = text or "", 
                     Visible = false,
                     Center = true, 
                     Outline = true, 
@@ -159,7 +159,7 @@ ESP.Types["CustomText"] = {
         text.Visible = true 
         text.Position = vector2New(partPos.X, partPos.Y) 
 
-        local formatted =  "[" .. espText .. "] " .. "[" .. distance .. "]"
+        local formatted =  "[" .. drawings.Text .. "] " .. "[" .. distance .. "]"
         if text.Text == formatted then return end 
         text.Text = formatted
     end,

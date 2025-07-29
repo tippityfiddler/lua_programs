@@ -125,6 +125,7 @@ ESP.Types["CustomText"] = {
     create = function(model, colour, text)
         if not ESP.Caches.CustomText[model] then
             ESP.Caches.CustomText[model] = {
+                RawText = text or "",
                 Text = createDrawing("Text", { 
                     Color = colour or fromRGB(255, 255, 255),
                     Text = text or "", 
@@ -145,7 +146,7 @@ ESP.Types["CustomText"] = {
         if not drawings then return end
 
         local text = drawings.Text
-        local rawTxt = text.Text
+        local rawTxt = drawings.RawText
         local modelPos = model.WorldPivot.Position
         local partPos, onScreen = wtvp(Camera, modelPos)
 

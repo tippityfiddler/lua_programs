@@ -1,4 +1,3 @@
-
 local ESP = {}
 
 --> Services:
@@ -444,6 +443,18 @@ ESP.Types["Arrow"] = {
 
 --> Public Library Functions
 local activeTypes = {}
+RunService.RenderStepped:Connect(function()
+    for typeName, enabled in pairs(activeTypes) do
+        if enabled then
+            for _, player in pairs(Players:GetPlayers()) do
+                if player ~= localPlayer then
+                    ESP.Types[typeName].update(player)
+                end
+            end
+        end
+    end
+end)
+
 function ESP:Enable(typeName)
 
     activeTypes[typeName] = true

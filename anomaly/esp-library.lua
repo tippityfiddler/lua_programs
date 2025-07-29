@@ -139,21 +139,27 @@ ESP.Types["CustomText"] = {
         end
     end,
 
-    update = function(part, espText)
-        if not part or not espText then return end 
-        local drawings = ESP.Caches.CustomText[part]
+    update = function(model, espText)
+        if not model or not espText then return end 
+        local drawings = ESP.Caches.CustomText[model]
         if not drawings then return end
-        local text = drawings.Text
 
-        local partPos, onScreen = wtvp(Camera, part.Position)
+        local text = drawings.Text
+        local modelPos = model:GetPivot().Position
+        local partPos, onScreen = wtvp(Camera, modelPos)
+
         if not onScreen then text.Visible = false; return end
         local char = localPlayer.Character 
+
         if not char then return end 
         local rootPart = char:FindFirstChild("HumanoidRootPart") 
         if not rootPart then return end 
-        local distance = round((part.Position - rootPart.Position).Magnitude)
+
+        local distance = round((modelPos - rootPart.Position).Magnitude)
+
         text.Visible = true 
         text.Position = vector2New(partPos.X, partPos.Y) 
+        
         local formatted =  "[" .. espText .. "] " .. "[" .. distance .. "]"
         if text.Text == formatted then return end 
         text.Text = formatted

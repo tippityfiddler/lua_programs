@@ -145,6 +145,7 @@ ESP.Types["CustomText"] = {
         if not drawings then return end
 
         local text = drawings.Text
+        local rawTxt = text.Text
         local modelPos = model.WorldPivot.Position
         local partPos, onScreen = wtvp(Camera, modelPos)
 
@@ -155,11 +156,10 @@ ESP.Types["CustomText"] = {
         if not rootPart then return end 
 
         local distance = round((modelPos - rootPart.Position).Magnitude)
-
         text.Visible = true 
         text.Position = vector2New(partPos.X, partPos.Y) 
 
-        local formatted = text.Text .. " [" .. distance .. "]"
+        local formatted = rawTxt .. " [" .. distance .. "]"
         if text.Text == formatted then return end 
         text.Text = formatted
     end,

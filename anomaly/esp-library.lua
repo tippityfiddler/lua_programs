@@ -168,7 +168,7 @@ ESP.Types["CustomText"] = {
     remove = function(model)
         local drawings = ESP.Caches.CustomText[model]
         if drawings then
-            for _,d in next, drawings do d:Remove() end
+            for _,d in next, drawings do if type(d) ~= "string" then d:Remove() end end
             ESP.Caches.CustomText[model] = nil
         end
     end,  

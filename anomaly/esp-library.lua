@@ -1,4 +1,3 @@
-
 local ESP = {}
 
 --> Services:
@@ -457,7 +456,6 @@ RunService.RenderStepped:Connect(function()
 end)
 
 function ESP:Enable(typeName)
-
     activeTypes[typeName] = true
     for _,player in next, Players:GetPlayers() do
         if player ~= localPlayer then

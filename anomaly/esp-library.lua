@@ -1,4 +1,3 @@
-
 local ESP = {}
 
 --> Services:
@@ -122,9 +121,9 @@ ESP.Types["Square"] = {
 }
 
 ESP.Types["CustomText"] = {
-    create = function(part)
-        if not ESP.Caches.CustomText[part] then
-            ESP.Caches.CustomText[part] = {
+    create = function(model)
+        if not ESP.Caches.CustomText[model] then
+            ESP.Caches.CustomText[model] = {
                 Text = createDrawing("Text", { 
                     Color = fromRGB(255, 255, 255),
                     Text = "", 
@@ -146,30 +145,30 @@ ESP.Types["CustomText"] = {
 
         local text = drawings.Text
         local modelPos = model:GetPivot().Position
+        print(modelPos)
         local partPos, onScreen = wtvp(Camera, modelPos)
 
         if not onScreen then text.Visible = false; return end
         local char = localPlayer.Character 
-
         if not char then return end 
-        local rootPart = char:FindFirstChild("HumanoidRootPart") 
+        local rootPart = char.PrimaryPart
         if not rootPart then return end 
 
         local distance = round((modelPos - rootPart.Position).Magnitude)
 
         text.Visible = true 
         text.Position = vector2New(partPos.X, partPos.Y) 
-        
+
         local formatted =  "[" .. espText .. "] " .. "[" .. distance .. "]"
         if text.Text == formatted then return end 
         text.Text = formatted
     end,
 
-    remove = function(part)
-        local drawings = ESP.Caches.CustomText[part]
+    remove = function(model)
+        local drawings = ESP.Caches.CustomText[model]
         if drawings then
             for _,d in next, drawings do d:Remove() end
-            ESP.Caches.CustomText[part] = nil
+            ESP.Caches.CustomText[model] = nil
         end
     end,  
 }

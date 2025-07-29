@@ -139,8 +139,8 @@ ESP.Types["CustomText"] = {
         end
     end,
 
-    update = function(model, espText)
-        if not model or not espText then return end 
+    update = function(model)
+        if not model then return end 
         local drawings = ESP.Caches.CustomText[model]
         if not drawings then return end
 

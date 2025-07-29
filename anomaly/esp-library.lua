@@ -159,7 +159,7 @@ ESP.Types["CustomText"] = {
         text.Visible = true 
         text.Position = vector2New(partPos.X, partPos.Y) 
 
-        local formatted =  "[" .. drawings.Text .. "] " .. "[" .. distance .. "]"
+        local formatted = text.Text .. " [" .. distance .. "]"
         if text.Text == formatted then return end 
         text.Text = formatted
     end,

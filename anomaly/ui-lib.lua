@@ -388,7 +388,7 @@ function Library:CreateTab(window, tabName)
             actualDropdownBtn.Parent = DropdownBtnContainer
             actualDropdownBtn.BackgroundColor3 = GREY_50
             actualDropdownBtn.BorderSizePixel = 0
-            actualDropdownBtn.Size = UDim2.new(0, 254, 0, 50)
+            actualDropdownBtn.Size = UDim2.new(0, 254, 0, 25)
             actualDropdownBtn.Font = Enum.Font.Ubuntu
             actualDropdownBtn.TextColor3 = RED
             actualDropdownBtn.TextSize = 14

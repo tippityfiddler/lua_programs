@@ -69,6 +69,8 @@ ESP.Types["Square"] = {
                     Transparency = 1
                 })
             }
+        else 
+            return
         end
     end,
 

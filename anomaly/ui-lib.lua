@@ -3,6 +3,7 @@ local HttpService = game:GetService("HttpService")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
+local StarterGui = game:GetService("StarterGui")
 Library.Tabs = {}
 
 local state = {}
@@ -529,6 +530,7 @@ function Library:CreateTab(window, tabName)
         local KeybindBtn = Instance.new("TextButton")
         local keybindConn 
         local bind = state[name] or "nil"
+        local initialCount = 0 
 
         KeybindLabel.Name = name
         KeybindLabel.Parent = NewTab
@@ -561,7 +563,8 @@ function Library:CreateTab(window, tabName)
                 bind = input.KeyCode.Name
                 state[name] = bind
                 saveState()
-                if name ~= "Hide UI" then callback(bind) end
+                initialCount += 1
+                callback(bind)
                 keybindConn:Disconnect()
             end)
         end)
@@ -570,7 +573,10 @@ function Library:CreateTab(window, tabName)
             UserInputService.InputBegan:Connect(function(input, gpe)  
                 if gpe then return end
                 if bind and input.KeyCode.Name == bind then 
-                    mainFrameUI.Visible = not mainFrameUI.Visible
+                    initialCount += 1
+                    if initialCount >= 2 then 
+                        mainFrameUI.Visible = not mainFrameUI.Visible
+                    end
                 end
             end)
         end

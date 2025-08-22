@@ -315,7 +315,7 @@ ESP.Types["HealthBar"] = {
         local headPos, onScreen = wtvp(Camera, head.Position)
         if not onScreen then return end
 
-        local health = health or humanoid.Health
+        local health = round(health or humanoid.Health)
         local healthRatio = health / humanoid.MaxHealth
         local healthBarHeight = height * healthRatio
 
@@ -469,7 +469,7 @@ ESP.Types["PlayerText"] = {
         if not model or not model.PrimaryPart then text.Visible = false; return end
         if not model:FindFirstChild("Humanoid") then return end 
         local humanoid = model.Humanoid 
-        local health = health or humanoid.Health 
+        local health = round(health or humanoid.Health)
 
         -- Determine if the player should be shown
         local isFFA = #Teams:GetChildren() == 0

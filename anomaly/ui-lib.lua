@@ -529,8 +529,7 @@ function Library:CreateTab(window, tabName)
         local KeybindLabel = Instance.new("TextLabel")
         local KeybindBtn = Instance.new("TextButton")
         local keybindConn 
-        local bind = state[name] or "nil"
-        local initialCount = 0 
+        local bind = state[name] or "nil" 
         local blocker 
 
         KeybindLabel.Name = name
@@ -564,7 +563,6 @@ function Library:CreateTab(window, tabName)
                 bind = input.KeyCode.Name
                 state[name] = bind
                 saveState()
-                initialCount = 0
                 callback(bind)
                 keybindConn:Disconnect()
             end)
@@ -574,31 +572,25 @@ function Library:CreateTab(window, tabName)
             UserInputService.InputBegan:Connect(function(input, gpe)  
                 if gpe then return end
                 if bind and input.KeyCode.Name == bind then 
-                    initialCount += 1
-                    if initialCount >= 2 then 
-                        mainFrameUI.Visible = not mainFrameUI.Visible
+                    mainFrameUI.Visible = not mainFrameUI.Visible
 
-                        if mainFrameUI.Visible then
-                            mainFrameUI.Visible = false
-
-                            blocker = Instance.new("Frame")
-                            blocker.Name = "UIBlocker"
-                            blocker.Parent = mainFrameUI.Parent
-                            blocker.BackgroundTransparency = 1
-                            blocker.Size = UDim2.new(1, 0, 1, 0)
-                            blocker.Position = UDim2.new(0, 0, 0, 0)
-                            blocker.ZIndex = 9999
-                            blocker.Active = true
-                            blocker.Visible = true
-                        else
-
-                            mainFrameUI.Visible = true
-                            if blocker then
-                                blocker:Destroy()
-                                blocker = nil
-                            end
+                    if mainFrameUI.Visible then
+                        blocker = Instance.new("Frame")
+                        blocker.Name = "UIBlocker"
+                        blocker.Parent = mainFrameUI.Parent
+                        blocker.BackgroundTransparency = 1
+                        blocker.Size = UDim2.new(1, 0, 1, 0)
+                        blocker.Position = UDim2.new(0, 0, 0, 0)
+                        blocker.ZIndex = 9999
+                        blocker.Active = true
+                        blocker.Visible = true
+                    else
+                        if blocker then
+                            blocker:Destroy()
+                            blocker = nil
                         end
                     end
+
                 end
             end)
         end

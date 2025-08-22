@@ -531,6 +531,7 @@ function Library:CreateTab(window, tabName)
         local keybindConn 
         local bind = state[name] or "nil"
         local initialCount = 0 
+        local blocker 
 
         KeybindLabel.Name = name
         KeybindLabel.Parent = NewTab
@@ -574,8 +575,29 @@ function Library:CreateTab(window, tabName)
                 if gpe then return end
                 if bind and input.KeyCode.Name == bind then 
                     initialCount += 1
-                    if initialCount >= 1 then 
+                    if initialCount >= 2 then 
                         mainFrameUI.Visible = not mainFrameUI.Visible
+
+                        if mainFrameUI.Visible then
+                            mainFrameUI.Visible = false
+
+                            blocker = Instance.new("Frame")
+                            blocker.Name = "UIBlocker"
+                            blocker.Parent = mainFrameUI.Parent
+                            blocker.BackgroundTransparency = 1
+                            blocker.Size = UDim2.new(1, 0, 1, 0)
+                            blocker.Position = UDim2.new(0, 0, 0, 0)
+                            blocker.ZIndex = 9999
+                            blocker.Active = true
+                            blocker.Visible = true
+                        else
+
+                            mainFrameUI.Visible = true
+                            if blocker then
+                                blocker:Destroy()
+                                blocker = nil
+                            end
+                        end
                     end
                 end
             end)

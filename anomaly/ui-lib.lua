@@ -563,7 +563,7 @@ function Library:CreateTab(window, tabName)
                 bind = input.KeyCode.Name
                 state[name] = bind
                 saveState()
-                initialCount += 1
+                initialCount = 0
                 callback(bind)
                 keybindConn:Disconnect()
             end)
@@ -574,7 +574,7 @@ function Library:CreateTab(window, tabName)
                 if gpe then return end
                 if bind and input.KeyCode.Name == bind then 
                     initialCount += 1
-                    if initialCount >= 2 then 
+                    if initialCount >= 1 then 
                         mainFrameUI.Visible = not mainFrameUI.Visible
                     end
                 end

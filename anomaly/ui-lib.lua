@@ -8,7 +8,7 @@ Library.Tabs = {}
 local state = {}
 local saveFolder = "Anomaly"
 local saveFile = saveFolder .. "/Data.json"
-
+local mainFrameUI 
 local function loadState()
     if isfile(saveFile) then
         local success, result = pcall(function()
@@ -196,7 +196,7 @@ function Library:CreateWindow(name)
     TabsHolderPadding.PaddingTop = UDim.new(0, 5)
 
     self:MakeDraggable(TopBar, MainBackground)
-
+    mainFrameUI = MainBackground 
     return MainBackground
 end
 
@@ -524,6 +524,55 @@ function Library:CreateTab(window, tabName)
     end
 
 
+    function TabObject:CreateKeybind(name, callback)
+        local KeybindLabel = Instance.new("TextLabel")
+        local KeybindBtn = Instance.new("TextButton")
+        local bind = nil 
+        local keybindConn 
+        
+        KeybindLabel.Name = name
+        KeybindLabel.Parent = NewTab
+        KeybindLabel.BackgroundColor3 = Color3.fromRGB(33, 33, 33)
+        KeybindLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        KeybindLabel.BorderSizePixel = 0
+        KeybindLabel.Size = UDim2.new(0, 267, 0, 49)
+        KeybindLabel.Font = Enum.Font.Ubuntu
+        KeybindLabel.Text = name
+        KeybindLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
+        KeybindLabel.TextSize = 14.000
+
+        KeybindBtn.Parent = KeybindLabel
+        KeybindBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        KeybindBtn.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        KeybindBtn.BorderSizePixel = 0
+        KeybindBtn.Position = UDim2.new(0.629213512, 0, 0.285714298, 0)
+        KeybindBtn.Size = UDim2.new(0, 83, 0, 20)
+        KeybindBtn.Font = Enum.Font.Ubuntu
+        KeybindBtn.TextColor3 = Color3.fromRGB(255, 0, 0)
+        KeybindBtn.TextSize = 14.000
+
+        KeybindBtn.MouseButton1Click:Connect(function()  
+            KeybindBtn.Text = "..." 
+
+            keybindConn = UserInputService.InputBegan:Connect(function(input, gpe)  
+                if gpe then return end
+                KeybindBtn.Text = input.KeyCode.Name
+                bind = input.KeyCode
+                callback(bind)
+                keybindConn:Disconnect()
+            end)
+        end)
+
+        if name == "Hide UI" then 
+            UserInputService.InputBegan:Connect(function(input, gpe)  
+                if gpe then return end
+                if bind and input.KeyCode == bind then 
+                    mainFrameUI.Visible = not mainFrameUI.Visible
+                end
+            end)
+        end
+
+    end
 
     TabObject.Frame = NewTab
     return TabObject

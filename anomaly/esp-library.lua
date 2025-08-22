@@ -23,7 +23,7 @@ ESP.Caches = {
     Line = {}, 
     Arrow = {},
     CustomText = {}, 
-
+    PlayerText = {}
 }
 
 ESP.Connections = {
@@ -292,7 +292,7 @@ ESP.Types["HealthBar"] = {
         end
     end,
 
-    update = function(player)
+    update = function(player, health)
         local drawings = ESP.Caches.HealthBar[player]
         if not drawings then return end
 
@@ -315,7 +315,8 @@ ESP.Types["HealthBar"] = {
         local headPos, onScreen = wtvp(Camera, head.Position)
         if not onScreen then return end
 
-        local healthRatio = humanoid.Health / humanoid.MaxHealth
+        local health = health or humanoid.Health
+        local healthRatio = health / humanoid.MaxHealth
         local healthBarHeight = height * healthRatio
 
         local boxPos = vector2New(headPos.X - width / 2, headPos.Y - height / 1.2)
@@ -340,7 +341,6 @@ ESP.Types["HealthBar"] = {
     end
 }
 
-ESP.Caches.Arrow = {}
 ESP.Types["Arrow"] = {
     create = function(player)
         if ESP.Caches.Arrow[player] then return end
@@ -441,6 +441,64 @@ ESP.Types["Arrow"] = {
     end,
 }
 
+ESP.Types["PlayerText"] = {
+    create = function(player)
+        if not ESP.Caches.CustomText[player] then
+            ESP.Caches.CustomText[player] = {
+                RawText = player.Name,
+                Text = createDrawing("Text", { 
+                    Color = fromRGB(255, 255, 255),
+                    Text = player.Name,
+                    Visible = false,
+                    Center = true, 
+                    Outline = true, 
+                    Position = vector2New(0, 0),
+                    Size = 16,
+                    Font = 2
+                })
+            }
+        end
+    end,
+
+    update = function(player, health) --> health is a number btw
+        local drawings = ESP.Caches.CustomText[player]
+        if not drawings then return end
+
+        local text = drawings.Text
+        local model = player.Character
+        if not model or not model.PrimaryPart then text.Visible = false; return end
+        if not model:FindFirstChild("Humanoid") then return end 
+        local humanoid = model.Humanoid 
+        local health = health or humanoid.Health 
+
+        -- Determine if the player should be shown
+        local isFFA = #Teams:GetChildren() == 0
+        local isEnemy = isFFA or (localPlayer.Team ~= player.Team)
+
+        if not isEnemy then 
+            text.Visible = false
+            return 
+        end
+
+        local partPos, onScreen = wtvp(Camera, model.PrimaryPart.Position)
+        if not onScreen then text.Visible = false; return end
+
+        local distance = round((model.PrimaryPart.Position - localPlayer.Character.PrimaryPart.Position).Magnitude)
+        text.Visible = true
+        text.Position = vector2New(partPos.X, partPos.Y)
+        text.Text = drawings.RawText .. " [" .. health .. "/" .. humanoid.MaxHealth .. "]" .. "\n[" .. distance .. "]"
+    end,
+
+    remove = function(player)
+        local drawings = ESP.Caches.CustomText[player]
+        if drawings then
+            drawings.Text:Remove()
+            ESP.Caches.CustomText[player] = nil
+        end
+    end
+}
+
+
 --> Public Library Functions
 local activeTypes = {}
 RunService.RenderStepped:Connect(function()
@@ -480,7 +538,6 @@ function ESP:Disable(typeName)
 
     if ESP.Connections.PlayerAdded then ESP.Connections.PlayerAdded:Disconnect(); ESP.Connections.PlayerAdded = nil end 
     if ESP.Connections.PlayerRemoving then ESP.Connections.PlayerRemoving:Disconnect(); ESP.Connections.PlayerRemoving = nil end 
-
 end 
 
 return ESP

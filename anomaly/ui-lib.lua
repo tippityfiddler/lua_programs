@@ -550,7 +550,8 @@ function Library:CreateTab(window, tabName)
         KeybindBtn.Font = Enum.Font.Ubuntu
         KeybindBtn.TextColor3 = Color3.fromRGB(255, 0, 0)
         KeybindBtn.TextSize = 14.000
-
+        KeybindBtn.Text = "nil"  
+        
         KeybindBtn.MouseButton1Click:Connect(function()  
             KeybindBtn.Text = "..." 
 
@@ -558,7 +559,8 @@ function Library:CreateTab(window, tabName)
                 if gpe then return end
                 KeybindBtn.Text = input.KeyCode.Name
                 bind = input.KeyCode
-                callback(bind)
+
+                if name ~= "Hide UI" then callback(bind) end
                 keybindConn:Disconnect()
             end)
         end)

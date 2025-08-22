@@ -527,9 +527,9 @@ function Library:CreateTab(window, tabName)
     function TabObject:CreateKeybind(name, callback)
         local KeybindLabel = Instance.new("TextLabel")
         local KeybindBtn = Instance.new("TextButton")
-        local bind = nil 
         local keybindConn 
-        
+        local bind = state[name] or "nil"
+
         KeybindLabel.Name = name
         KeybindLabel.Parent = NewTab
         KeybindLabel.BackgroundColor3 = Color3.fromRGB(33, 33, 33)
@@ -550,16 +550,17 @@ function Library:CreateTab(window, tabName)
         KeybindBtn.Font = Enum.Font.Ubuntu
         KeybindBtn.TextColor3 = Color3.fromRGB(255, 0, 0)
         KeybindBtn.TextSize = 14.000
-        KeybindBtn.Text = "nil"  
-        
+        KeybindBtn.Text = bind
+
         KeybindBtn.MouseButton1Click:Connect(function()  
             KeybindBtn.Text = "..." 
 
             keybindConn = UserInputService.InputBegan:Connect(function(input, gpe)  
                 if gpe then return end
                 KeybindBtn.Text = input.KeyCode.Name
-                bind = input.KeyCode
-
+                bind = input.KeyCode.Name
+                state[name] = bind
+                saveState()
                 if name ~= "Hide UI" then callback(bind) end
                 keybindConn:Disconnect()
             end)
@@ -568,12 +569,11 @@ function Library:CreateTab(window, tabName)
         if name == "Hide UI" then 
             UserInputService.InputBegan:Connect(function(input, gpe)  
                 if gpe then return end
-                if bind and input.KeyCode == bind then 
+                if bind and input.KeyCode.Name == bind then 
                     mainFrameUI.Visible = not mainFrameUI.Visible
                 end
             end)
         end
-
     end
 
     TabObject.Frame = NewTab
